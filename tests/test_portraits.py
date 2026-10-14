@@ -48,6 +48,7 @@ from tests.support import (
     FakeBackend,
     build_and_pick_all,
     jpeg_bytes,
+    published_layer_file,
     run_cli,
     specimen_plate,
 )
@@ -284,7 +285,7 @@ def test_publish_adds_plates_and_cached_morphs_to_the_lineage_layer(root: Path) 
     assert code == 0, output
     assert "portraits: 3 plates, 1 morphs, 0 unpinned skipped" in output
     assert "note: luca -> tetrapod falls back to a plain dissolve" in output
-    lineage = json.loads((paths.media / "layers" / "lineage.json").read_text())
+    lineage = json.loads(published_layer_file(paths.media, "lineage").read_text())
     assert lineage["portraits"] == {
         "plates": [
             _plate(root, book, "human", "SPECIMEN"),
@@ -358,7 +359,7 @@ def test_publish_computes_a_morph_missing_from_the_cache_from_the_two_pins(root:
     assert code == 0, output
     record = load_morph(paths.portrait_morphs, key)
     assert record is not None
-    lineage = json.loads((paths.media / "layers" / "lineage.json").read_text())
+    lineage = json.loads(published_layer_file(paths.media, "lineage").read_text())
     published = [
         (m["older"], m["younger"], m["forwardRange"]) for m in lineage["portraits"]["morphs"]
     ]
@@ -404,7 +405,7 @@ def test_publish_writes_a_dark_plate_exposure_normalised_and_leaves_its_pin_unto
 
     assert code == 0, output
     assert expected.exposure.gain > 1.0
-    lineage = json.loads((paths.media / "layers" / "lineage.json").read_text())
+    lineage = json.loads(published_layer_file(paths.media, "lineage").read_text())
     assert lineage["portraits"] == {
         "plates": [
             {

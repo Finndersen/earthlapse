@@ -7465,6 +7465,15 @@ a republish reaches viewers within five minutes rather than immediately.
 - **A cache purge per deploy.** Needs a Cloudflare zone token in CI and leaves browser caches, which
   `immutable` tells never to revalidate, still stale.
 
+**Amendment — layer JSON is content-hashed too** (2026-10-14). The five-minute TTL did not keep
+layer data fresh in practice: after the population layer was extended to 2025, a phone went on
+pairing the new page code with its cached `layers/population.json` across refreshes hours later.
+Layer files are now published as `layers/<id>-<hash10>.json`, hashed over the published bytes; the
+manifest carries the hashed path, `_prune_stale_media` clears `data/media/layers/`, and the upload
+caches them immutable like scenes. A republished layer is a URL no cache has seen, so it shows the
+moment the page reads the new manifest. The rejection above stands for textures and morphs only:
+hashing a layer file needs no rewriting elsewhere, since only the manifest names it.
+
 ## ADR-058 — Publish computes portrait morphs from the pins; OpenCV is pinned
 
 **Status:** accepted — human-directed 2026-09-24. Amends ADR-015's "run `earthlapse morph` before
@@ -7926,10 +7935,10 @@ fraction of a pixel.
 - **One chart holds every HUD scalar** (added 2026-10-14). Either sparkline opens it on its own
   layer; toggles add or remove the others. Each layer keeps its own colour and value axis (the
   first chosen on the left, the second on the right), over one time axis spanning every layer on
-  offer, selected or not, so a toggle never moves the window. The chart opens on the narrowest
-  recent window holding the opening layer's record, so population opens on the last 25,000 years
-  rather than as a sliver at the edge of 482 Myr; the window then changes only when a range is
-  picked.
+  offer, selected or not, so a toggle never moves the window. A chart opened on a record shorter
+  than half that axis opens on the record's own span, offered as an extra range button ("12 ka"
+  for population; windows of 10,000 years or more are labelled in ka, as the axis is), rather
+  than as a sliver at the edge of 482 Myr; the window then changes only when a range is picked.
 - **The time axis is linear.** A log-time toggle was tried (2026-10-02) and removed on 2026-10-14:
   the recent windows below show recent change more directly, and one axis is one less control.
 - **The chart zooms to recent windows** — the last 25,000, 2,000 or 200 years, each offered only

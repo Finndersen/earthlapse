@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { createScalarLayer } from './factories'
-import { defaultRange, fitValueRange, niceTicks, recentWindowsFor, sampleCurve, timeAxis, windowDomain } from './chartGeometry'
+import { chartWindows, fitValueRange, niceTicks, recentWindowsFor, sampleCurve, timeAxis, windowDomain } from './chartGeometry'
 
 describe('timeAxis', () => {
   it('maps the oldest edge to 0 and the newest to 1, round-tripping in between, with ticks inside the span', () => {
@@ -28,9 +28,9 @@ describe('recent windows', () => {
     expect(windowDomain([10, 12_025], null)).toEqual([10, 12_025])
   })
 
-  it('opens a selection on the narrowest window holding its shortest record, else the whole span', () => {
-    expect(defaultRange([25_000, 2_000, 200], [12_015, 4.8e8])).toBe(25_000)
-    expect(defaultRange([25_000, 2_000, 200], [4.8e8])).toBeNull()
+  it('opens on a short record\'s own span, offered among the windows, and on the whole axis for a long one', () => {
+    expect(chartWindows([0, 4.8e8], 12_025)).toEqual({ windows: [25_000, 12_025, 2_000, 200], opening: 12_025 })
+    expect(chartWindows([0, 4.8e8], 4.8e8)).toEqual({ windows: [25_000, 2_000, 200], opening: null })
   })
 })
 

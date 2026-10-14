@@ -33,12 +33,15 @@ export function recentWindowsFor(timeDomain: readonly [GeoTime, GeoTime]): numbe
   return RECENT_WINDOWS.filter((w) => w < (oldest - newest) / 2)
 }
 
-/** The window a selection of records opens on: the narrowest that still holds the shortest
- *  record, so a short record drawn beside a long one is not a sliver at its edge; `null` (the
- *  whole span) when none does. */
-export function defaultRange(windows: readonly number[], spans: readonly number[]): number | null {
-  const fitting = windows.filter((w) => w >= Math.min(...spans))
-  return fitting.length === 0 ? null : Math.min(...fitting)
+/** The windows a chart over `timeDomain` offers, and the one it opens on: the opening record's
+ *  own span, offered beside the recent windows when it is under half the axis, so a short record
+ *  opens filling the plot rather than as a sliver at the edge of a long one; else the whole axis. */
+export function chartWindows(timeDomain: readonly [GeoTime, GeoTime], openingOldest: GeoTime): { windows: number[]; opening: number | null } {
+  const [newest, oldest] = timeDomain
+  const opening = openingOldest - newest < (oldest - newest) / 2 ? openingOldest : null
+  const windows = new Set<number>(recentWindowsFor(timeDomain))
+  if (opening !== null) windows.add(opening)
+  return { windows: [...windows].sort((a, b) => b - a), opening }
 }
 
 /** The `[newest, oldest]` the chart plots: the whole record, or its last `window` years. */

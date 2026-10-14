@@ -76,8 +76,8 @@ make deploy-site                               # build against the R2 origin, th
 ```
 
 `deploy/sync-media.sh` uploads in three passes because the cache policies differ (ADR-057): files
-whose names carry a content hash get `max-age=31536000, immutable`; every other media file (globe
-textures, layer JSON, portrait morphs) gets 5 minutes and revalidation, and is re-uploaded on every
+whose names carry a content hash (scenes, portraits, layer JSON, audio) get `max-age=31536000,
+immutable`; every other media file (globe textures, portrait morphs) gets 5 minutes and revalidation, and is re-uploaded on every
 deploy so its header is current; `manifest.json` gets 60 seconds.
 There is no `wrangler r2 sync`; `wrangler r2 object` is single-object only, so this uses rclone
 against R2's S3 endpoint, the route Cloudflare documents. It needs a current rclone: the workflow

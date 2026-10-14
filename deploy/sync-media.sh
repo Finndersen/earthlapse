@@ -10,7 +10,7 @@
 #   1. content-hashed media (`wind-077abd6e63.mp3`, `scenes/city-3a91cf02de.webp`) — immutable,
 #      cached for a year. Only a name matching HASHED gets this: an unhashed name cached
 #      immutable keeps serving its old bytes after a republish.
-#   2. every other media file (globe textures, layer JSON, portrait morphs) — cached briefly and
+#   2. every other media file (globe textures, portrait morphs) — cached briefly and
 #      revalidated. Always re-uploaded, so an object stored under an older policy is rewritten.
 #   3. manifest.json — changes every publish, so it gets the shortest TTL.
 #

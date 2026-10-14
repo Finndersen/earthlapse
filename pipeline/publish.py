@@ -2,10 +2,10 @@
 
 Everything is assembled and validated in memory first (`prepare_publication`) and only then
 written (`write_publication`), so a refused publish leaves data/media/ as it was. All world
-data comes through `WorldModel` (ADR-002). `write_publication` also prunes `data/media/scenes/`
-and `data/media/portraits/` down to exactly what this publish wrote (`_prune_stale_media`), so a
-scene or portrait whose published filename changes -- a format change, or no longer being pinned
-at all -- never leaves an orphaned file behind.
+data comes through `WorldModel` (ADR-002). `write_publication` also prunes `data/media/scenes/`,
+`data/media/portraits/` and `data/media/layers/` down to exactly what this publish wrote
+(`_prune_stale_media`), so a file whose published name changes -- new content, a format change,
+or no longer being pinned at all -- never leaves an orphaned file behind.
 """
 
 from __future__ import annotations
@@ -629,6 +629,9 @@ def write_publication(publication: Publication, media_dir: Path) -> Path:
         target = media_dir / layer.published
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(dump_layer_data(layer.data))
+    _prune_stale_media(
+        media_dir / "layers", frozenset(Path(f.published).name for f in publication.layer_files)
+    )
     manifest_path = media_dir / MANIFEST_NAME
     manifest_path.write_text(dump_manifest(publication.manifest))
     return manifest_path
@@ -1076,10 +1079,16 @@ def _layers(
                 SeriesGap(from_index=g.from_index, to_index=g.to_index) for g in series.gaps
             ),
         )
-        files.append(LayerFile(published=_layer_path(spec), data=data))
+        layer_file = _layer_file(spec, data)
+        files.append(layer_file)
         entries.append(
             _layer_entry(
-                spec, LayerDataKind.SCALAR, series.domain, series.unit, series.interpolation
+                spec,
+                LayerDataKind.SCALAR,
+                series.domain,
+                series.unit,
+                series.interpolation,
+                layer_file.published,
             )
         )
     for spec in NODE_LAYERS:
@@ -1102,10 +1111,15 @@ def _layers(
                 for n in tree.nodes
             ),
         )
-        files.append(LayerFile(published=_layer_path(spec), data=data))
+        layer_file = _layer_file(spec, data)
+        files.append(layer_file)
         # Tree.sample holds its youngest node through to the present, so the layer is defined
         # from t=0, not from that node's divergence date.
-        entries.append(_layer_entry(spec, LayerDataKind.NODE, (0.0, tree.domain[1]), None, None))
+        entries.append(
+            _layer_entry(
+                spec, LayerDataKind.NODE, (0.0, tree.domain[1]), None, None, layer_file.published
+            )
+        )
     for spec in RASTER_LAYERS:
         raster = world.rasters.get(spec.curated_id)
         if raster is None:
@@ -1115,8 +1129,13 @@ def _layers(
             frames=tuple(RasterFrameData(t=f.t, ref=f.ref) for f in raster.frames),
             encoding=spec.raster_encoding,
         )
-        files.append(LayerFile(published=_layer_path(spec), data=data))
-        entries.append(_layer_entry(spec, LayerDataKind.RASTER, raster.domain, None, None))
+        layer_file = _layer_file(spec, data)
+        files.append(layer_file)
+        entries.append(
+            _layer_entry(
+                spec, LayerDataKind.RASTER, raster.domain, None, None, layer_file.published
+            )
+        )
     for spec in EVENT_LAYERS:
         event_set = world.events.get(spec.curated_id)
         if event_set is None:
@@ -1124,8 +1143,13 @@ def _layers(
         data = EventsData(
             id=event_set.id, events=tuple(_timeline_event(e) for e in event_set.events)
         )
-        files.append(LayerFile(published=_layer_path(spec), data=data))
-        entries.append(_layer_entry(spec, LayerDataKind.EVENTS, event_set.domain, None, None))
+        layer_file = _layer_file(spec, data)
+        files.append(layer_file)
+        entries.append(
+            _layer_entry(
+                spec, LayerDataKind.EVENTS, event_set.domain, None, None, layer_file.published
+            )
+        )
     for spec in FEATURE_LAYERS:
         feature_set = world.features.get(spec.curated_id)
         if feature_set is None:
@@ -1140,21 +1164,34 @@ def _layers(
         data = FeatureSetData(
             id=feature_set.id, features=tuple(_feature(f) for f in feature_set.features)
         )
-        files.append(LayerFile(published=_layer_path(spec), data=data))
-        entries.append(_layer_entry(spec, LayerDataKind.FEATURES, feature_set.domain, None, None))
+        layer_file = _layer_file(spec, data)
+        files.append(layer_file)
+        entries.append(
+            _layer_entry(
+                spec, LayerDataKind.FEATURES, feature_set.domain, None, None, layer_file.published
+            )
+        )
     territories = world.features.get(EMPIRES_CURATED_ID)
     if territories is not None and empires is not None:
         event_set = world.events.get(EVENTS_ID)
         event_ids = frozenset(e.id for e in event_set.events) if event_set else frozenset()
         data = _territory_data(territories, empires, event_ids)
         domain = (min(s.t_end for s in data.snapshots), max(s.t_start for s in data.snapshots))
-        files.append(LayerFile(published=_layer_path(EMPIRES_LAYER), data=data))
-        entries.append(_layer_entry(EMPIRES_LAYER, LayerDataKind.TERRITORIES, domain, None, None))
+        layer_file = _layer_file(EMPIRES_LAYER, data)
+        files.append(layer_file)
+        entries.append(
+            _layer_entry(
+                EMPIRES_LAYER, LayerDataKind.TERRITORIES, domain, None, None, layer_file.published
+            )
+        )
     return tuple(files), tuple(entries)
 
 
-def _layer_path(spec: LayerSpec) -> str:
-    return f"layers/{spec.curated_id}.json"
+def _layer_file(spec: LayerSpec, data: LayerData) -> LayerFile:
+    """Content-hashed like scenes and stems (ADR-057), so a republished layer is a new URL that
+    no cache already holds, and the media host can cache it `immutable`."""
+    name = content_hashed_filename(spec.curated_id, "json", dump_layer_data(data).encode())
+    return LayerFile(published=f"layers/{name}", data=data)
 
 
 def _layer_entry(
@@ -1163,6 +1200,7 @@ def _layer_entry(
     domain: tuple[GeoTime, GeoTime],
     unit: str | None,
     interpolation: Interpolation | None,
+    published: str,
 ) -> LayerManifest:
     return LayerManifest(
         id=spec.curated_id,
@@ -1174,7 +1212,7 @@ def _layer_entry(
         chartable=spec.chartable,
         unit=unit,
         interpolation=interpolation,
-        data=_layer_path(spec),
+        data=published,
     )
 
 

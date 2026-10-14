@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "buildId": "5013c18334783264",
+  "buildId": "fded56afc3e97b06",
   "assetBase": "/media",
   "scenes": [
     {
@@ -2450,7 +2450,7 @@
       "chartable": true,
       "unit": "ppm",
       "interpolation": "log-linear",
-      "data": "layers/co2.json"
+      "data": "layers/co2-1fd99cc7ca.json"
     },
     {
       "id": "day_length",
@@ -2465,7 +2465,7 @@
       "chartable": false,
       "unit": "h",
       "interpolation": "linear",
-      "data": "layers/day_length.json"
+      "data": "layers/day_length-ce82305972.json"
     },
     {
       "id": "population",
@@ -2480,7 +2480,7 @@
       "chartable": true,
       "unit": "people",
       "interpolation": "log-linear",
-      "data": "layers/population.json"
+      "data": "layers/population-23475bc95a.json"
     },
     {
       "id": "mean_temp",
@@ -2495,7 +2495,7 @@
       "chartable": true,
       "unit": "°C",
       "interpolation": "linear",
-      "data": "layers/mean_temp.json"
+      "data": "layers/mean_temp-4915f345f2.json"
     },
     {
       "id": "ice_volume",
@@ -2510,7 +2510,7 @@
       "chartable": false,
       "unit": "LGM = 1",
       "interpolation": "linear",
-      "data": "layers/ice_volume.json"
+      "data": "layers/ice_volume-2f1bc3df5f.json"
     },
     {
       "id": "sea_level",
@@ -2525,7 +2525,7 @@
       "chartable": false,
       "unit": "m",
       "interpolation": "linear",
-      "data": "layers/sea_level.json"
+      "data": "layers/sea_level-7e3b8d80fa.json"
     },
     {
       "id": "lineage",
@@ -2538,7 +2538,7 @@
       ],
       "source": "lineage",
       "chartable": false,
-      "data": "layers/lineage.json"
+      "data": "layers/lineage-a7c7aa8e6e.json"
     },
     {
       "id": "paleodem",
@@ -2551,7 +2551,7 @@
       ],
       "source": "paleodem",
       "chartable": false,
-      "data": "layers/paleodem.json"
+      "data": "layers/paleodem-5580e020ea.json"
     },
     {
       "id": "plates_neoproterozoic",
@@ -2564,7 +2564,7 @@
       ],
       "source": "plates-neoproterozoic",
       "chartable": false,
-      "data": "layers/plates_neoproterozoic.json"
+      "data": "layers/plates_neoproterozoic-8df3a982ef.json"
     },
     {
       "id": "basemap_t0",
@@ -2577,7 +2577,7 @@
       ],
       "source": "basemap",
       "chartable": false,
-      "data": "layers/basemap_t0.json"
+      "data": "layers/basemap_t0-3f5fb66d90.json"
     },
     {
       "id": "basemap_t1",
@@ -2590,7 +2590,7 @@
       ],
       "source": "basemap",
       "chartable": false,
-      "data": "layers/basemap_t1.json"
+      "data": "layers/basemap_t1-9656122107.json"
     },
     {
       "id": "hyde_cleared_land",
@@ -2603,7 +2603,7 @@
       ],
       "source": "hyde",
       "chartable": false,
-      "data": "layers/hyde_cleared_land.json"
+      "data": "layers/hyde_cleared_land-d77deaafe1.json"
     },
     {
       "id": "hyde_population_density",
@@ -2616,7 +2616,7 @@
       ],
       "source": "hyde",
       "chartable": false,
-      "data": "layers/hyde_population_density.json"
+      "data": "layers/hyde_population_density-bd77a75c85.json"
     },
     {
       "id": "globe-regimes",
@@ -2629,7 +2629,7 @@
       ],
       "source": "globe-regimes",
       "chartable": false,
-      "data": "layers/globe-regimes.json"
+      "data": "layers/globe-regimes-f48708fe04.json"
     },
     {
       "id": "cities",
@@ -2642,7 +2642,7 @@
       ],
       "source": "cities",
       "chartable": false,
-      "data": "layers/cities.json"
+      "data": "layers/cities-7918195e4b.json"
     },
     {
       "id": "empires",
@@ -2655,7 +2655,7 @@
       ],
       "source": "cliopatria",
       "chartable": false,
-      "data": "layers/empires.json"
+      "data": "layers/empires-ffb45e8950.json"
     }
   ],
   "events": [

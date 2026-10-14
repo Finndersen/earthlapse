@@ -19,7 +19,7 @@ import type { PointerEvent as ReactPointerEvent } from 'react'
 import { formatGeoTime } from '@/timeline'
 import type { GeoTime, Layer, ScalarValue } from '@/types/layer'
 
-import { defaultRange, niceTicks, recentWindowsFor, sampleCurve, splitAtT, timeAxis, windowDomain } from '../chartGeometry'
+import { chartWindows, niceTicks, sampleCurve, splitAtT, timeAxis, windowDomain } from '../chartGeometry'
 import type { ChartCurve, ChartPoint } from '../chartGeometry'
 import { axisUnit, formatScalarValue, valueUnitLabel } from '../format'
 import { HUD_READOUT_THROTTLE_MS, useThrottledValue } from '@/lib/useThrottledValue'
@@ -43,8 +43,10 @@ export interface LayerChartProps {
 /** `null` is the whole span; a number is the last that many years. */
 type ChartRange = number | null
 
+/** Windows of 10,000 years or more read in ka, as the time axis labels them. */
 function rangeLabel(range: ChartRange): string {
-  return range === null ? 'All' : `${range.toLocaleString('en-US')} yr`
+  if (range === null) return 'All'
+  return range >= 10_000 ? `${Math.round(range / 1000)} ka` : `${range.toLocaleString('en-US')} yr`
 }
 
 interface Series {
@@ -67,11 +69,9 @@ export function LayerChart({ layers, initialLayerId, t }: LayerChartProps) {
   // The time axis spans every dataset on offer, not just the selected ones, so toggling a
   // dataset never moves the window it is drawn in.
   const span = useMemo(() => unionDomain(layers.map((layer) => layer.timeDomain)), [layers])
-  const windows = recentWindowsFor(span)
-  const [range, setRange] = useState<ChartRange>(() => {
-    const initial = layers.find((layer) => layer.id === initialLayerId)
-    return initial === undefined ? null : defaultRange(windows, [initial.timeDomain[1] - initial.timeDomain[0]])
-  })
+  const openingOldest = layers.find((layer) => layer.id === initialLayerId)?.timeDomain[1] ?? span[1]
+  const { windows, opening } = chartWindows(span, openingOldest)
+  const [range, setRange] = useState<ChartRange>(opening)
 
   const selected = useMemo(() => layers.filter((layer) => selectedIds.has(layer.id)), [layers, selectedIds])
   const shown = useMemo(() => windowDomain(span, range), [span, range])

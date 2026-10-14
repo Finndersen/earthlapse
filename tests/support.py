@@ -361,3 +361,9 @@ def mock_generator(
     return GeminiImageGenerator(
         client, Ledger(ceiling_usd=18.0), ledger_path, sleep=recorded.append
     )
+
+
+def published_layer_file(media: Path, layer_id: str) -> Path:
+    """The one published file for `layer_id`, whatever content hash its name carries."""
+    (path,) = (media / "layers").glob(f"{layer_id}-*.json")
+    return path

@@ -102,6 +102,7 @@ from tests.support import (
     FakeBackend,
     build_and_pick_all,
     fake_png,
+    published_layer_file,
     run_cli,
 )
 
@@ -538,7 +539,7 @@ def test_publish_emits_a_valid_manifest_and_layer_json_in_the_parser_formats(roo
                 "chartable": True,
                 "unit": "ppm",
                 "interpolation": "log-linear",
-                "data": "layers/co2.json",
+                "data": _hashed_layer_path(media, "co2"),
             },
             {
                 "id": "day_length",
@@ -550,7 +551,7 @@ def test_publish_emits_a_valid_manifest_and_layer_json_in_the_parser_formats(roo
                 "chartable": False,
                 "unit": "hours",
                 "interpolation": "linear",
-                "data": "layers/day_length.json",
+                "data": _hashed_layer_path(media, "day_length"),
             },
             {
                 "id": "lineage",
@@ -560,7 +561,7 @@ def test_publish_emits_a_valid_manifest_and_layer_json_in_the_parser_formats(roo
                 "timeDomain": [0.0, 4.0e9],
                 "source": "lineage",
                 "chartable": False,
-                "data": "layers/lineage.json",
+                "data": _hashed_layer_path(media, "lineage"),
             },
             {
                 "id": "paleodem",
@@ -570,7 +571,7 @@ def test_publish_emits_a_valid_manifest_and_layer_json_in_the_parser_formats(roo
                 "timeDomain": [0.0, 1e8],
                 "source": "paleodem",
                 "chartable": False,
-                "data": "layers/paleodem.json",
+                "data": _hashed_layer_path(media, "paleodem"),
             },
             {
                 "id": "globe-regimes",
@@ -580,7 +581,7 @@ def test_publish_emits_a_valid_manifest_and_layer_json_in_the_parser_formats(roo
                 "timeDomain": [4.35e9, 4.52e9],
                 "source": "globe-regimes",
                 "chartable": False,
-                "data": "layers/globe-regimes.json",
+                "data": _hashed_layer_path(media, "globe-regimes"),
             },
         ],
         # docs/GLOBE.md §6: only events-core reaches Manifest.events — globe-regimes is a
@@ -797,8 +798,14 @@ def _published_scene(
 
 
 def _layer_json(media: Path, layer_id: str) -> dict[str, object]:
-    loaded: dict[str, object] = json.loads((media / "layers" / f"{layer_id}.json").read_text())
+    loaded: dict[str, object] = json.loads(published_layer_file(media, layer_id).read_text())
     return loaded
+
+
+def _hashed_layer_path(media: Path, layer_id: str) -> str:
+    """The manifest path a layer file must have: named by the hash of its own bytes."""
+    data = published_layer_file(media, layer_id).read_bytes()
+    return f"layers/{content_hashed_filename(layer_id, 'json', data)}"
 
 
 def _key_paths(value: object, prefix: str = "") -> set[str]:
@@ -1215,8 +1222,9 @@ def test_empires_publish_as_a_territories_layer_with_roster_lineages_and_labels(
 
     (entry,) = (e for e in entries if e.id == "empires")
     assert (entry.data_kind, entry.time_domain) == (LayerDataKind.TERRITORIES, (571.0, 1908.0))
-    assert (entry.data, entry.source) == ("layers/empires.json", "cliopatria")
-    (published,) = (f for f in files if f.published == "layers/empires.json")
+    assert re.fullmatch(r"layers/empires-[0-9a-f]{10}\.json", entry.data)
+    assert entry.source == "cliopatria"
+    (published,) = (f for f in files if f.published == entry.data)
     assert isinstance(published.data, TerritoryData)
     wire = published.data.model_dump(mode="json", by_alias=True)
     assert wire["geometry"] == "vectors/cliopatria_territories-0123456789.json"
