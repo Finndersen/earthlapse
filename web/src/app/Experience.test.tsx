@@ -568,7 +568,7 @@ describe('Experience HUD scalar readouts', () => {
     expect(within(screen.getByTestId('shell-readouts')).getByTestId('scalar-readout-mean_temp').hasAttribute('data-readout-hidden')).toBe(false)
   })
 
-  it("opens a readout's expanded chart from its sparkline, on a log time axis for a deep-time record", async () => {
+  it("opens a readout's expanded chart from its sparkline, on log time for a deep-time record and linear when zoomed to recent years", async () => {
     await renderSettled()
     act(() => {
       useTimeStore.getState().setT(100)
@@ -577,6 +577,8 @@ describe('Experience HUD scalar readouts', () => {
     const dialog = screen.getByRole('dialog')
     expect(within(dialog).getByTestId('layer-chart').getAttribute('data-layer-id')).toBe('mean_temp')
     expect(within(dialog).getByRole('button', { name: 'Log time' }).getAttribute('aria-pressed')).toBe('true')
+    fireEvent.click(within(dialog).getByRole('button', { name: '200 yr' }))
+    expect(within(dialog).getByRole('button', { name: 'Linear time' }).getAttribute('aria-pressed')).toBe('true')
     fireEvent.keyDown(dialog, { key: 'Escape' })
     expect(screen.queryByRole('dialog')).toBeNull()
   })

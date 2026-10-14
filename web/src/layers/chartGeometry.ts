@@ -9,9 +9,16 @@
  * the oldest edge and `1` the newest, so the plot reads left to right in playback order.
  */
 
+import { formatAge, formatCalendar } from '@/timeline'
+import { calendarYearAt, HOLOCENE_BASE, yearsBeforePresent } from '@/timeline/epoch'
 import type { GeoTime, Layer, ScalarValue } from '@/types/layer'
 
 export type TimeAxisKind = 'linear' | 'log'
+
+export interface TimeTick {
+  t: GeoTime
+  label: string
+}
 
 export interface TimeAxis {
   kind: TimeAxisKind
@@ -19,14 +26,31 @@ export interface TimeAxis {
   domain: readonly [GeoTime, GeoTime]
   toUnit: (t: GeoTime) => number
   fromUnit: (u: number) => GeoTime
-  ticks: () => GeoTime[]
+  ticks: () => TimeTick[]
 }
 
 /** A log axis needs a positive near edge; a year is the finest age anything here resolves. */
 const LOG_FLOOR_YEARS = 1
 
-/** Above this oldest-to-newest ratio a linear axis squeezes the recent record out of sight. */
-const LOG_DEFAULT_RATIO = 1e4
+/** Above this oldest-to-newest ratio a linear axis squeezes the recent record out of sight. Set so
+ *  a span up to the last glacial cycle (25 kyr against a one-year floor) still opens linear. */
+const LOG_DEFAULT_RATIO = 1e5
+
+/** The recent spans the chart can zoom to, in years before present: since the last glacial
+ *  maximum, the Common Era, and the industrial era. */
+export const RECENT_WINDOWS = [25_000, 2_000, 200] as const
+
+/** The recent windows worth offering for a record: those under half its span. */
+export function recentWindowsFor(timeDomain: readonly [GeoTime, GeoTime]): number[] {
+  const [newest, oldest] = timeDomain
+  return RECENT_WINDOWS.filter((w) => w < (oldest - newest) / 2)
+}
+
+/** The `[newest, oldest]` the chart plots: the whole record, or its last `window` years. */
+export function windowDomain(timeDomain: readonly [GeoTime, GeoTime], window: number | null): [GeoTime, GeoTime] {
+  const [newest, oldest] = timeDomain
+  return window === null ? [newest, oldest] : [newest, Math.min(oldest, Math.max(window, newest + 1))]
+}
 
 export function defaultTimeAxisKind(timeDomain: readonly [GeoTime, GeoTime]): TimeAxisKind {
   const [newest, oldest] = timeDomain
@@ -42,7 +66,7 @@ export function timeAxis(kind: TimeAxisKind, timeDomain: readonly [GeoTime, GeoT
       domain: [rawNewest, oldest],
       toUnit: (t) => (oldest - t) / span,
       fromUnit: (u) => oldest - u * span,
-      ticks: () => niceTicks(rawNewest, oldest, 5),
+      ticks: () => linearTicks(rawNewest, oldest),
     }
   }
   const newest = Math.max(rawNewest, LOG_FLOOR_YEARS)
@@ -53,8 +77,25 @@ export function timeAxis(kind: TimeAxisKind, timeDomain: readonly [GeoTime, GeoT
     domain: [newest, oldest],
     toUnit: (t) => (logOldest - Math.log10(Math.max(t, newest))) / logSpan,
     fromUnit: (u) => 10 ** (logOldest - u * logSpan),
-    ticks: () => decadeTicks(newest, oldest),
+    ticks: () => decadeTicks(newest, oldest).map((t) => ({ t, label: compactAge(t) })),
   }
+}
+
+/** Round calendar years for a span inside the Holocene (1850, 1900, 1950), round ages otherwise. */
+function linearTicks(newest: GeoTime, oldest: GeoTime): TimeTick[] {
+  if (oldest <= HOLOCENE_BASE) {
+    return niceTicks(calendarYearAt(oldest), calendarYearAt(newest), 5).map((year) => {
+      const t = yearsBeforePresent(year)
+      return { t, label: formatCalendar(t) }
+    })
+  }
+  return niceTicks(newest, oldest, 5).map((t) => ({ t, label: compactAge(t) }))
+}
+
+/** `formatAge`, but "100 yr" rather than "100 years ago", which collides with its neighbours on a
+ *  narrow plot. */
+function compactAge(t: GeoTime): string {
+  return t >= 1 && t < 1000 ? `${Math.round(t)} yr` : formatAge(t)
 }
 
 /** Powers of ten inside `[lo, hi]`, thinned to every other one when there are more than seven. */

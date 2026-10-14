@@ -26,6 +26,12 @@
   color: var(--hud-dim, rgba(239, 233, 220, 0.62));
 }
 
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .axisToggle {
   display: inline-flex;
   border-radius: 999px;

@@ -6,17 +6,19 @@
  * readout. The part playback has reached draws at full weight and the rest as a faint line, so
  * the chart stays readable at any `t` without presenting what lies ahead as already reached.
  *
- * The time axis is linear or log (`../chartGeometry`), defaulting to whichever suits the
- * record's span, with a toggle to switch.
+ * It shows the whole record or zooms to a recent window (since the last glacial maximum, the Common
+ * Era, the industrial era), with the value axis refitted to what is in view. The time axis is
+ * linear or log (`../chartGeometry`), defaulting to whichever suits the span shown, with a toggle
+ * to switch.
  */
 
 import { useMemo, useState } from 'react'
 import type { PointerEvent as ReactPointerEvent } from 'react'
 
-import { formatAge, formatGeoTime } from '@/timeline'
+import { formatGeoTime } from '@/timeline'
 import type { GeoTime, Layer, ScalarValue } from '@/types/layer'
 
-import { defaultTimeAxisKind, niceTicks, sampleCurve, splitAtT, timeAxis } from '../chartGeometry'
+import { defaultTimeAxisKind, niceTicks, recentWindowsFor, sampleCurve, splitAtT, timeAxis, windowDomain } from '../chartGeometry'
 import type { ChartPoint, TimeAxisKind } from '../chartGeometry'
 import { formatScalarValue } from '../format'
 import { HUD_READOUT_THROTTLE_MS, useThrottledValue } from '@/lib/useThrottledValue'
@@ -34,12 +36,25 @@ export interface LayerChartProps {
 
 const AXIS_LABELS: Record<TimeAxisKind, string> = { linear: 'Linear time', log: 'Log time' }
 
+/** `null` is the whole record; a number is the last that many years. */
+type ChartRange = number | null
+
+function rangeLabel(range: ChartRange): string {
+  return range === null ? 'All' : `${range.toLocaleString('en-US')} yr`
+}
+
 export function LayerChart({ layer, t }: LayerChartProps) {
   const throttledT = useThrottledValue(t, HUD_READOUT_THROTTLE_MS)
+  const [range, setRange] = useState<ChartRange>(null)
   const [axisKind, setAxisKind] = useState<TimeAxisKind>(() => defaultTimeAxisKind(layer.timeDomain))
   const [hoverU, setHoverU] = useState<number | null>(null)
 
-  const axis = useMemo(() => timeAxis(axisKind, layer.timeDomain), [axisKind, layer.timeDomain])
+  const shown = useMemo(() => windowDomain(layer.timeDomain, range), [layer.timeDomain, range])
+  const axis = useMemo(() => timeAxis(axisKind, shown), [axisKind, shown])
+  const selectRange = (next: ChartRange) => {
+    setRange(next)
+    setAxisKind(defaultTimeAxisKind(windowDomain(layer.timeDomain, next)))
+  }
   const curve = useMemo(() => sampleCurve(layer, axis, SAMPLE_COUNT), [layer, axis])
   const [vMin, vMax] = curve.valueRange ?? [0, 1]
 
@@ -56,6 +71,7 @@ export function LayerChart({ layer, t }: LayerChartProps) {
   const playheadT = Math.min(Math.max(throttledT, newest), oldest)
   const playheadValue = throttledT <= oldest ? layer.sample(playheadT) : null
   const playheadU = axis.toUnit(playheadT)
+  const playheadInView = throttledT <= shown[1]
 
   const hoverT = hoverU === null ? null : axis.fromUnit(hoverU)
   const hoverValue = hoverT === null ? null : layer.sample(hoverT)
@@ -86,12 +102,21 @@ export function LayerChart({ layer, t }: LayerChartProps) {
             <span className={styles.readingTime}>Not yet reached</span>
           )}
         </span>
+        <div className={styles.controls}>
+          <div className={styles.axisToggle} role="group" aria-label="Range">
+          {[null, ...recentWindowsFor(layer.timeDomain)].map((option) => (
+            <button key={option ?? 'all'} type="button" aria-pressed={range === option} onClick={() => selectRange(option)}>
+              {rangeLabel(option)}
+            </button>
+          ))}
+        </div>
         <div className={styles.axisToggle} role="group" aria-label="Time axis">
           {(['linear', 'log'] as const).map((kind) => (
             <button key={kind} type="button" aria-pressed={axisKind === kind} onClick={() => setAxisKind(kind)}>
               {AXIS_LABELS[kind]}
             </button>
           ))}
+          </div>
         </div>
       </div>
 
@@ -108,7 +133,7 @@ export function LayerChart({ layer, t }: LayerChartProps) {
           {/* Stretched to the plot box, so text and the dot live in HTML above it rather than
               being squashed with it. */}
           <svg className={styles.svg} viewBox={`0 0 ${VIEW_WIDTH} ${VIEW_HEIGHT}`} preserveAspectRatio="none" role="img" aria-label={`${layer.name} chart`}>
-            {axis.ticks().map((tick) => (
+            {axis.ticks().map(({ t: tick }) => (
               <line key={tick} className={styles.grid} x1={x(axis.toUnit(tick))} x2={x(axis.toUnit(tick))} y1={0} y2={VIEW_HEIGHT} />
             ))}
             {bands.map((run, i) => (
@@ -124,17 +149,17 @@ export function LayerChart({ layer, t }: LayerChartProps) {
             {reached.map((run, i) => (
               <polyline key={i} className={styles.line} data-testid="layer-chart-line" points={linePoints(run)} />
             ))}
-            {throttledT <= oldest && <line className={styles.playhead} x1={x(playheadU)} x2={x(playheadU)} y1={0} y2={VIEW_HEIGHT} />}
+            {playheadInView && <line className={styles.playhead} x1={x(playheadU)} x2={x(playheadU)} y1={0} y2={VIEW_HEIGHT} />}
             {hoverU !== null && <line className={styles.hover} x1={x(hoverU)} x2={x(hoverU)} y1={0} y2={VIEW_HEIGHT} />}
           </svg>
-          {playheadValue !== null && (
+          {playheadValue !== null && playheadInView && (
             <span className={styles.dot} style={{ left: `${playheadU * 100}%`, top: `${(y(playheadValue.value) / VIEW_HEIGHT) * 100}%` }} />
           )}
         </div>
         <div className={styles.timeTicks} aria-hidden="true">
           {axis.ticks().map((tick) => (
-            <span key={tick} style={{ left: `${axis.toUnit(tick) * 100}%`, transform: `translateX(${tickLabelShift(axis.toUnit(tick))}%)` }}>
-              {formatTickAge(tick)}
+            <span key={tick.t} style={{ left: `${axis.toUnit(tick.t) * 100}%`, transform: `translateX(${tickLabelShift(axis.toUnit(tick.t))}%)` }}>
+              {tick.label}
             </span>
           ))}
         </div>
@@ -142,12 +167,6 @@ export function LayerChart({ layer, t }: LayerChartProps) {
       {unit !== '' && <p className={styles.unitNote}>Values in {unit}</p>}
     </div>
   )
-}
-
-/** A time tick's label: `formatAge`, but "100 yr" rather than "100 years ago", which collides
- *  with its neighbours on a narrow plot. */
-function formatTickAge(t: GeoTime): string {
-  return t >= 1 && t < 1000 ? `${Math.round(t)} yr` : formatAge(t)
 }
 
 /** A time label's horizontal anchor: centred on its tick, but kept inside the plot at either end. */

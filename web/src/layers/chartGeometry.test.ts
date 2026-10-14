@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { createScalarLayer } from './factories'
-import { defaultTimeAxisKind, fitValueRange, niceTicks, sampleCurve, timeAxis } from './chartGeometry'
+import { defaultTimeAxisKind, fitValueRange, niceTicks, recentWindowsFor, sampleCurve, timeAxis, windowDomain } from './chartGeometry'
 
 describe('timeAxis', () => {
   it.each(['linear', 'log'] as const)('maps the oldest edge to 0 and the newest to 1, round-tripping in between (%s)', (kind) => {
@@ -9,9 +9,9 @@ describe('timeAxis', () => {
     expect(axis.toUnit(4.8e8)).toBeCloseTo(0)
     expect(axis.toUnit(10)).toBeCloseTo(1)
     expect(axis.fromUnit(axis.toUnit(21_000))).toBeCloseTo(21_000, 3)
-    for (const tick of axis.ticks()) {
-      expect(tick).toBeGreaterThanOrEqual(10)
-      expect(tick).toBeLessThanOrEqual(4.8e8)
+    for (const { t } of axis.ticks()) {
+      expect(t).toBeGreaterThanOrEqual(10)
+      expect(t).toBeLessThanOrEqual(4.8e8)
     }
   })
 
@@ -20,9 +20,22 @@ describe('timeAxis', () => {
     expect(1 - axis.toUnit(200)).toBeGreaterThan(0.1)
   })
 
-  it('defaults to log only for records spanning many orders of magnitude', () => {
+  it('defaults to log only for spans of many orders of magnitude, so the last glacial cycle opens linear', () => {
     expect(defaultTimeAxisKind([0, 4.8e8])).toBe('log')
-    expect(defaultTimeAxisKind([10, 12_025])).toBe('linear')
+    expect(defaultTimeAxisKind([0, 25_000])).toBe('linear')
+  })
+
+  it('labels a span inside the Holocene with round calendar years', () => {
+    expect(timeAxis('linear', [0, 200]).ticks().map((tick) => tick.label)).toEqual(['1850', '1900', '1950', '2000'])
+  })
+})
+
+describe('recent windows', () => {
+  it('offers only windows under half the record, each ending at its newest sample', () => {
+    expect(recentWindowsFor([0, 4.8e8])).toEqual([25_000, 2_000, 200])
+    expect(recentWindowsFor([10, 12_025])).toEqual([2_000, 200])
+    expect(windowDomain([10, 12_025], 200)).toEqual([10, 200])
+    expect(windowDomain([10, 12_025], null)).toEqual([10, 12_025])
   })
 })
 
