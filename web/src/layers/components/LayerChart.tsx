@@ -50,7 +50,6 @@ function rangeLabel(range: ChartRange): string {
 interface Series {
   layer: Layer<ScalarValue>
   className: string
-  unit: string
   curve: ChartCurve
   y: (value: number) => number
 }
@@ -87,7 +86,6 @@ export function LayerChart({ layers, initialLayerId, t }: LayerChartProps) {
         return {
           layer,
           className: SERIES_CLASSES[layers.indexOf(layer) % SERIES_CLASSES.length]!,
-          unit: layer.sample(layer.timeDomain[0])?.unit ?? '',
           curve,
           y: (value: number) => VIEW_HEIGHT - ((value - vMin) / (vMax - vMin || 1)) * VIEW_HEIGHT,
         }
@@ -155,7 +153,7 @@ export function LayerChart({ layers, initialLayerId, t }: LayerChartProps) {
               const value = readingT <= s.layer.timeDomain[1] ? s.layer.sample(Math.max(readingT, s.layer.timeDomain[0])) : null
               return (
                 <span key={s.layer.id} className={`${styles.readingValue} ${s.className}`}>
-                  {value === null ? 'no record' : `${formatScalarValue(value.value, s.unit)} ${valueUnitLabel(s.unit)}`.trim()}
+                  {value === null ? 'no record' : `${formatScalarValue(value.value, value.unit)} ${valueUnitLabel(value.unit)}`.trim()}
                 </span>
               )
             })}
@@ -241,7 +239,7 @@ function SeriesPaths({ series, t, x }: { series: Series; t: GeoTime; x: (u: numb
 function ValueAxis({ series, side }: { series: Series | undefined; side: 'left' | 'right' }) {
   const range = series?.curve.valueRange ?? null
   if (series === undefined || range === null) return <div className={side === 'left' ? styles.valueAxisEmpty : undefined} aria-hidden="true" />
-  const unit = axisUnit(range[1], series.unit)
+  const unit = axisUnit(range[1], series.curve.unit)
   const ticks = niceTicks(range[0], range[1], 4).map((value) => ({ value, label: String(Number((value / unit.divisor).toPrecision(12))) }))
   const title = unit.label === '' ? series.layer.name : `${series.layer.name}, ${unit.label}`
   return (

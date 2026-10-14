@@ -45,7 +45,7 @@ describe('fitValueRange', () => {
 })
 
 describe('sampleCurve', () => {
-  it('breaks the trace at a declared gap rather than bridging it', () => {
+  it('breaks the trace at a declared gap rather than bridging it, keeping the samples\' unit', () => {
     const layer = createScalarLayer(
       { id: 'x', name: 'X', surface: 'hud', dataKind: 'scalar', timeDomain: [0, 100], source: 's', chartable: true, unit: 'u', interpolation: 'linear', data: 'x.json' },
       {
@@ -56,7 +56,9 @@ describe('sampleCurve', () => {
         gaps: [{ fromIndex: 1, toIndex: 2 }],
       },
     )
-    expect(sampleCurve(layer, timeAxis(layer.timeDomain), 100).runs).toHaveLength(2)
+    const curve = sampleCurve(layer, timeAxis(layer.timeDomain), 100)
+    expect(curve.runs).toHaveLength(2)
+    expect(curve.unit).toBe('u')
   })
 })
 

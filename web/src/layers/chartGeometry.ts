@@ -95,6 +95,8 @@ export interface ChartCurve {
   runs: ChartPoint[][]
   /** `[min, max]` of the plotted value axis, or `null` when the layer has nothing to plot. */
   valueRange: [number, number] | null
+  /** The unit the plotted samples declare; `''` when nothing was plotted. */
+  unit: string
 }
 
 /** Headroom above and below the data so the trace never runs along the plot's edge. */
@@ -124,7 +126,7 @@ export function sampleCurve(layer: Layer<ScalarValue>, axis: TimeAxis, count: nu
     hi = Math.max(hi, v.value, upper ?? v.value)
   }
   if (run.length > 1) runs.push(run)
-  return { runs, valueRange: Number.isFinite(lo) ? fitValueRange(lo, hi, unit) : null }
+  return { runs, valueRange: Number.isFinite(lo) ? fitValueRange(lo, hi, unit) : null, unit }
 }
 
 /** Units whose zero is a convention rather than an absence: a temperature in °C, a sea level
