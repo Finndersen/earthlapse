@@ -60,7 +60,7 @@ const ScalarReadoutBody = memo(function ScalarReadoutBody({ layer, t }: ScalarRe
         </span>
       )}
       {held && value !== null && (
-        <span className={styles.ancestorSince}>as of {formatGeoTime(sampledT)}</span>
+        <span className={styles.asOf}>as of {formatGeoTime(sampledT)}</span>
       )}
     </span>
   )

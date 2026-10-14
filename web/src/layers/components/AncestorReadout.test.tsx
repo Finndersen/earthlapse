@@ -8,13 +8,13 @@ import { AncestorReadout } from './AncestorReadout'
 afterEach(cleanup)
 
 describe('<AncestorReadout>', () => {
-  it('names the ancestor, its representative and when it diverged, or "no data" before the root', () => {
+  it('names the ancestor, its representative and since when it has been the ancestor, or "no data" before the root', () => {
     const layer = createNodeLayer(ANCESTOR_MANIFEST, ANCESTOR_DATA)
     const text = render(<AncestorReadout layer={layer} t={5e7} />).container.textContent ?? ''
     expect(text).toContain('First primate')
     expect(text).toContain('Purgatorius')
-    expect(text).toContain('since')
+    expect(text).toMatch(/^Your ancestor since \S/)
     cleanup()
-    expect(render(<AncestorReadout layer={layer} t={4.3e9} />).container.textContent).toBe('no data')
+    expect(render(<AncestorReadout layer={layer} t={4.3e9} />).container.textContent).toBe('Your ancestorno data')
   })
 })

@@ -1,8 +1,8 @@
 'use client'
 
 /**
- * `<AncestorPanel layer t assetBase portraits />` — `<AncestorPortrait>` above a "Your ancestor"
- * label and `<AncestorReadout>` in one column, for the shell's ancestor slot (DESIGN §10). This is the
+ * `<AncestorPanel layer t assetBase portraits />` — `<AncestorPortrait>` above
+ * `<AncestorReadout>` in one column, for the shell's ancestor slot (DESIGN §10). This is the
  * only place the two are composed: it owns the flex column between them so the portrait's own
  * edge always tracks the text's, whichever way the slot aligns (flex-end at every breakpoint,
  * desktop and phone alike).
@@ -38,10 +38,7 @@ export function AncestorPanel({ layer, t, assetBase, portraits }: AncestorPanelP
   return (
     <div className={styles.panel} data-testid="ancestor-readout">
       <AncestorPortrait layer={layer} t={t} assetBase={assetBase} portraits={portraits} />
-      <div className={styles.ancestorCaption}>
-        <span className={styles.label}>Your ancestor</span>
-        <AncestorReadout layer={layer} t={t} />
-      </div>
+      <AncestorReadout layer={layer} t={t} />
     </div>
   )
 }

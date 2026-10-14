@@ -1,7 +1,7 @@
 'use client'
 
-/** Text-only ancestor readout (v1 — DESIGN §10): the node's label, its representative
- *  organism when known, and "since <tDivergence>" via `@/timeline`'s `formatGeoTime`. */
+/** Text-only ancestor readout (DESIGN §10): a "Your ancestor since <tDivergence>" kicker over the
+ *  node's label and its representative organism when known. */
 
 import { formatGeoTime } from '@/timeline'
 import type { GeoTime, Layer, NodeValue } from '@/types/layer'
@@ -16,20 +16,24 @@ export interface AncestorReadoutProps {
 export function AncestorReadout({ layer, t }: AncestorReadoutProps) {
   const node = layer.sample(t)
 
-  if (node === null) {
-    return <span className={styles.noData}>no data</span>
-  }
-
   return (
     <span className={styles.ancestor}>
-      <strong className={styles.ancestorName}>{node.label}</strong>
-      {node.representative !== undefined && (
-        <span className={styles.ancestorRepresentative}>
-          <span className={styles.ancestorDash}> — </span>
-          {node.representative}
-        </span>
+      <span className={styles.label}>
+        Your ancestor{node !== null && ` since ${formatGeoTime(node.tDivergence)}`}
+      </span>
+      {node === null ? (
+        <span className={styles.noData}>no data</span>
+      ) : (
+        <>
+          <strong className={styles.ancestorName}>{node.label}</strong>
+          {node.representative !== undefined && (
+            <span className={styles.ancestorRepresentative}>
+              <span className={styles.ancestorDash}> — </span>
+              {node.representative}
+            </span>
+          )}
+        </>
       )}
-      <span className={styles.ancestorSince}> since {formatGeoTime(node.tDivergence)}</span>
     </span>
   )
 }

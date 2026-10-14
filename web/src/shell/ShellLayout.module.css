@@ -779,17 +779,17 @@
   }
 
   /* Top-right corner: the panel's own portrait shrinks to `--orb-size` (AncestorPanel's
-     hud.module.css) so the row balances, and its kicker/name/since text (below) becomes a short
+     hud.module.css) so the row balances, and its kicker/name text (below) becomes a short
      right-aligned caps stack instead of the desktop's prose column. `min-height` holds row 1 at
      the same height whether or not the lineage has started (`<AncestorPortrait>` renders nothing
      before it has): sized for the portrait-present case (the About button + gap + portrait + panel
-     gap + kicker + caption gap + two text lines), it stops the readouts/feed below from
+     gap + a kicker wrapped to two lines + gap + the name), it stops the readouts/feed below from
      jumping down the moment a portrait first appears. */
   .ancestor {
     justify-self: end;
     align-items: flex-end;
     max-width: 132px;
-    min-height: calc(22px + 4px + var(--orb-size) + 8px + 12px + 3px + 30px);
+    min-height: calc(22px + 4px + var(--orb-size) + 8px + 24px + 4px + 15px);
     text-align: right;
     gap: 4px;
   }
