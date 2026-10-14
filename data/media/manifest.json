@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "buildId": "675ef9c951c98434",
+  "buildId": "b2254832e8e84691",
   "assetBase": "/media",
   "scenes": [
     {
@@ -2355,12 +2355,12 @@
       "id": "waters-edge",
       "label": "At the water's edge",
       "tStart": 44.16635916254486,
-      "tEnd": 63.87680633323439
+      "tEnd": 61.71363488110063
     },
     {
       "id": "open-ground",
       "label": "On open ground",
-      "tStart": 63.87680633323439,
+      "tStart": 61.71363488110063,
       "tEnd": 73.7596147662627
     },
     {
