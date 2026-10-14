@@ -1993,7 +1993,7 @@ scenes:
   # first, corrected in review), its shares traded in open secondary markets "one of which became
   # the Amsterdam Stock Exchange"; by 1669 "over 150 merchant ships, 40 warships, 50,000
   # employees" -- a 1669 figure, stated in the caption as a forward reference from this 1650
-  # scene, the same convention giza-great-pyramid and green-revolution-fields already use.
+  # scene, the same convention giza-great-pyramid already uses.
   # Wikipedia "Euronext Amsterdam": the exchange "is considered the oldest 'modern' securities
   # market in the world" (Braudel's caveat: earlier share-like markets existed in Venice,
   # Florence and Genoa; "modern" carries the claim, not literal first-ever). Review fix
@@ -2310,8 +2310,8 @@ scenes:
   # the fuller span; this scene is one moment within it. Caption figure: Wikipedia "Tokyo City",
   # "Tokyo became the second-largest city in the world (population 4.9 million) upon absorbing
   # several outlying districts in July 1932" -- a 1932 figure, stated as a forward reference from
-  # this 1930 scene, the same convention amsterdam-voc-harbour/giza-great-pyramid/
-  # green-revolution-fields use. TONE: no legible Japanese or English signage, no glowing neon --
+  # this 1930 scene, the same convention amsterdam-voc-harbour/giza-great-pyramid
+  # use. TONE: no legible Japanese or English signage, no glowing neon --
   # VISUAL_SPEC §2 holds this chapter's time of day to daylight, so the era's famous electric
   # signs are shown unlit, exactly as ford-model-t-street's already are. Kept in open-ground
   # (GROUND), continuing the run from somme-1916 before the cut to molten-earth at
@@ -2437,58 +2437,6 @@ scenes:
     framing: {focus: [0.62, 0.5], pan: 0}
     pin: {asset_digest: "cb19517050596667", path: "data/pins/scenes/post-war-boom-suburbia/cb19517050596667.jpg"}
 
-  # Mid-1960s, the Green Revolution's spread through South Asia (events.yaml green-revolution,
-  # t_min/t_max 55-65, 1970-1960); t = 2025 - 1965 = 60, rounded to "the mid-1960s" rather than one
-  # year since the technology diffused over the decade. Wikipedia "Green Revolution": Norman
-  # Borlaug's short-stemmed, disease-resistant Mexican wheat lines and the new high-yield rice
-  # varieties bred alongside them (IR8 released 1966) roughly doubled to tripled regional cereal
-  # yields within a generation -- its wheat harvest rose from about 10 million tonnes a year in the
-  # 1960s to 73 million by 2006. Framed on a Punjab-style canal, a WATER_EDGE fit: the Green
-  # Revolution's yield gains depended on expanded irrigation as much as on the seed itself.
-  # Composite, generic farmland, like industrial-mill-town, not a documented specific field.
-  # Review fix (2026-09-15): the caption originally led with the Green Revolution page's claim of
-  # India's rice yields rising ~2 to ~6 t/ha (1960s to mid-1990s), a figure inconsistent both with
-  # the wheat field actually depicted and, independently, with Wikipedia "Rice production in India"'s
-  # own yield table (national average ~1.0 t/ha in the 1960s to ~1.9 t/ha in 1996-97/1997-98, roughly
-  # a third of the Green Revolution page's number) -- dropped in favour of the wheat figure, which
-  # matches the crop shown and is not contradicted elsewhere. The eucalyptus windbreak and dhoti were
-  # also swapped for a shisham windbreak and a kurta/tehmat, since large-scale eucalyptus planting and
-  # dhoti-style dress are not period- or region-typical for 1960s Punjab.
-  - id: green-revolution-fields
-    t: 60.0
-    chapter: waters-edge
-    shot: WATER_EDGE
-    title: "The Green Revolution"
-    caption: By the mid-1960s, Norman Borlaug's high-yield wheat and new rice varieties lift Asian cereal yields severalfold, credited with saving up to a billion people from famine.
-    unsourced:
-      o2_percent: 21  # modern
-      mean_temp_c: 14  # rounded: mid-1960s global mean, still close to pre-industrial before post-1970s warming
-    subject:
-      setting: An irrigation canal running through a ripening field of new short-stemmed, high-yield wheat in Punjab, at the height of the Green Revolution's spread through South Asia, about the mid-1960s
-      left_mass: a row of tall shisham (Indian rosewood) trees planted along the canal bank to mark the field boundary
-      vegetation: dense, waist-high, unusually short-stemmed wheat standing thick and uniform across the field, heavy-headed with grain, running back from the canal
-      fauna: a pair of cattle egrets stalking insects at the canal's edge
-      main_subject: a farmer in a plain cotton kurta and tehmat with a turban walking beside a small diesel pump set on the canal bank, its pipe feeding an earthen distributary channel into the wheat field, a grey tractor working the next field beyond him
-      ground: a packed-earth canal bank and narrow footpath, with a few sacks of chemical fertiliser stacked by the pump
-      water: a straight, narrow, brown irrigation canal, calm, its level held by an upstream head-regulator out of frame
-      far_bank: more high-yield wheat fields and a distant village of flat-roofed mud-brick houses, a few new brick ones rising among them
-      sky_and_light: a clear, hazy, hot pre-monsoon sky; bright, harsh midday light
-      absent: [combine harvesters, cabbed modern tractors, GPS-guided machinery, plastic irrigation pipe, motor scooters, modern clothing, identifiable faces, drought-stunted crop, tall traditional wheat varieties lodging in the field]
-    events: [green-revolution]
-    # ADR-023 (2026-09-15 human-history scene sounds): originally `industry` `loop`, gain 0.45,
-    # for a single diesel pump and a tractor working the next field. Dropped by that amendment's
-    # own 2026-09-15 re-review: the `industry` stem is blukotek's "Work of a Large Steam Engine",
-    # a Victorian piston beat at about 1.5 strokes/s (`sources/audio-stems/stems.toml`) -- it does
-    # not match a single 1960s diesel pump or tractor at any gain. No CC0/PD clip of a period
-    # diesel pump/tractor was sourced in the time this pass budgeted, so per CLAUDE.md ("if
-    # something is unusable, stop and report; do not silently substitute a different dataset")
-    # this scene carries no `sound` -- the flat 0.48 `settlement` floor covers the rural ambience.
-    # ADR-034: the brief names Punjab; marked at Ludhiana, home of the agricultural university that
-    # led the region's high-yield wheat trials.
-    location: {lat: 30.9010, lon: 75.8573, label: "Punjab, India"}
-    framing: {focus: [0.6, 0.62], pan: 0, portrait_zoom: 1.25}
-    pin: {asset_digest: "d6a9b3f322ea5a15", path: "data/pins/scenes/green-revolution-fields/d6a9b3f322ea5a15.jpg"}
-
   # 16 July 1969, Kennedy Space Center Launch Complex 39A, Florida; t = 2025 - 1969 = 56, matching
   # events.yaml moon-landing (t_min/t_max 56, four days later on 20 July). Wikipedia, "Apollo 11"
   # article: liftoff at 9:32 am EDT on a clear morning; Saturn V, white with the black
@@ -2536,7 +2484,7 @@ scenes:
   # 1956; by 2004 global container traffic reached 354 million TEU a year, and within a few years
   # containers carried roughly nine-tenths of the world's non-bulk seaborne trade. A generic major
   # port, composite like industrial-mill-town, not one named terminal. Kept in waters-edge
-  # (WATER_EDGE), continuing the run from apollo-11-launch and green-revolution-fields: a working
+  # (WATER_EDGE), continuing the run from apollo-11-launch: a working
   # harbour quay is a natural fit for the composition's water-filled lower third.
   - id: containerisation-port
     t: 50.0
@@ -2586,7 +2534,7 @@ scenes:
     t: 39.0
     chapter: open-ground
     shot: GROUND
-    title: "Pripyat Evacuated"
+    title: "Chernobyl Reactor Explodes"
     caption: At 01:23 on 26 April 1986, an explosion and fire destroy Reactor 4 at Chernobyl; Pripyat, population 49,360, is evacuated by bus the next day and never resettled.
     unsourced:
       o2_percent: 21  # modern
@@ -2683,7 +2631,7 @@ scenes:
   # the 'fishbone' pattern of roads and side-clearings is the visually distinctive signature."
   # Rondônia is the standard example of this pattern (colonisation along highway BR-364 from the
   # 1970s, Wikipedia "Rondônia"), used here as a representative setting for the fishbone signature
-  # rather than one surveyed clearing, like green-revolution-fields' composite Punjab field.
+  # rather than one surveyed clearing.
   # GROUND's low, close, shallow-depth-of-field framing cannot show the pattern from above the way
   # a satellite image does, so it is read in the frame instead as a freshly cut side-road opening
   # into the forest wall at an angle, with more such cuts repeating into the middle distance -- the

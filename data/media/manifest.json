@@ -258,7 +258,7 @@
       "image": "scenes/chernobyl-exclusion-zone-b82eaa7156.webp",
       "thumbnail": "scenes/chernobyl-exclusion-zone-thumb-b0b0ae354f.webp",
       "shot": "GROUND",
-      "title": "Pripyat Evacuated",
+      "title": "Chernobyl Reactor Explodes",
       "caption": "At 01:23 on 26 April 1986, an explosion and fire destroy Reactor 4 at Chernobyl; Pripyat, population 49,360, is evacuated by bus the next day and never resettled.",
       "events": [
         "chernobyl-disaster"
@@ -354,41 +354,6 @@
         "pan": 270.0
       },
       "pinned": "a0da45cad76f825d",
-      "width": 2752,
-      "height": 1536
-    },
-    {
-      "id": "green-revolution-fields",
-      "t": 60.0,
-      "chapterId": "waters-edge",
-      "image": "scenes/green-revolution-fields-8604c1325c.webp",
-      "thumbnail": "scenes/green-revolution-fields-thumb-7ea2d0429b.webp",
-      "shot": "WATER_EDGE",
-      "title": "The Green Revolution",
-      "caption": "By the mid-1960s, Norman Borlaug's high-yield wheat and new rice varieties lift Asian cereal yields severalfold, credited with saving up to a billion people from famine.",
-      "events": [
-        "green-revolution"
-      ],
-      "location": {
-        "label": "Punjab, India",
-        "presentDay": {
-          "lat": 30.901,
-          "lon": 75.8573
-        },
-        "marker": {
-          "lat": 30.901,
-          "lon": 75.8573
-        }
-      },
-      "framing": {
-        "focus": [
-          0.6,
-          0.62
-        ],
-        "pan": 0.0,
-        "portraitZoom": 1.25
-      },
-      "pinned": "d6a9b3f322ea5a15",
       "width": 2752,
       "height": 1536
     },
