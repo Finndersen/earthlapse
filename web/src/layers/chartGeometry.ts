@@ -19,6 +19,7 @@ export interface TimeAxis {
   domain: readonly [GeoTime, GeoTime]
   toUnit: (t: GeoTime) => number
   fromUnit: (u: number) => GeoTime
+  /** Newest first. */
   ticks: () => TimeTick[]
 }
 
@@ -30,6 +31,14 @@ export const RECENT_WINDOWS = [25_000, 2_000, 200] as const
 export function recentWindowsFor(timeDomain: readonly [GeoTime, GeoTime]): number[] {
   const [newest, oldest] = timeDomain
   return RECENT_WINDOWS.filter((w) => w < (oldest - newest) / 2)
+}
+
+/** The window a selection of records opens on: the narrowest that still holds the shortest
+ *  record, so a short record drawn beside a long one is not a sliver at its edge; `null` (the
+ *  whole span) when none does. */
+export function defaultRange(windows: readonly number[], spans: readonly number[]): number | null {
+  const fitting = windows.filter((w) => w >= Math.min(...spans))
+  return fitting.length === 0 ? null : Math.min(...fitting)
 }
 
 /** The `[newest, oldest]` the chart plots: the whole record, or its last `window` years. */
@@ -52,10 +61,12 @@ export function timeAxis(timeDomain: readonly [GeoTime, GeoTime]): TimeAxis {
 /** Round calendar years for a span inside the Holocene (1850, 1900, 1950), round ages otherwise. */
 function linearTicks(newest: GeoTime, oldest: GeoTime): TimeTick[] {
   if (oldest <= HOLOCENE_BASE) {
-    return niceTicks(calendarYearAt(oldest), calendarYearAt(newest), 5).map((year) => {
-      const t = yearsBeforePresent(year)
-      return { t, label: formatCalendar(t) }
-    })
+    return niceTicks(calendarYearAt(oldest), calendarYearAt(newest), 5)
+      .reverse()
+      .map((year) => {
+        const t = yearsBeforePresent(year)
+        return { t, label: formatCalendar(t) }
+      })
   }
   return niceTicks(newest, oldest, 5).map((t) => ({ t, label: formatAge(t) }))
 }

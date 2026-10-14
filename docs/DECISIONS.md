@@ -7923,6 +7923,11 @@ fraction of a pixel.
   needs no slot in the shell and no store state.
 - **The chart shows the whole record**, solid where playback has reached and faint beyond it, with
   the uncertainty band, value and time ticks, the playhead and a hover readout.
+- **One chart holds every HUD scalar** (added 2026-10-14). Either sparkline opens it on its own
+  layer; toggles add or remove the others. Each layer keeps its own colour and value axis (the
+  first chosen on the left, the second on the right), over one time axis spanning all of them. A
+  selection opens on the narrowest recent window holding its shortest record, so population beside
+  temperature opens on the last 25,000 years rather than as a sliver at the edge of 482 Myr.
 - **The time axis is linear.** A log-time toggle was tried (2026-10-02) and removed on 2026-10-14:
   the recent windows below show recent change more directly, and one axis is one less control.
 - **The chart zooms to recent windows** — the last 25,000, 2,000 or 200 years, each offered only

@@ -568,14 +568,19 @@ describe('Experience HUD scalar readouts', () => {
     expect(within(screen.getByTestId('shell-readouts')).getByTestId('scalar-readout-mean_temp').hasAttribute('data-readout-hidden')).toBe(false)
   })
 
-  it("opens a readout's expanded chart from its sparkline, zoomable to a recent window", async () => {
+  it("opens the chart on a readout's layer from its sparkline, with other layers toggleable and a recent window zoomable", async () => {
     await renderSettled()
     act(() => {
       useTimeStore.getState().setT(100)
     })
     fireEvent.click(screen.getByRole('button', { name: 'Expand Global temperature chart' }))
     const dialog = screen.getByRole('dialog')
-    expect(within(dialog).getByTestId('layer-chart').getAttribute('data-layer-id')).toBe('mean_temp')
+    const chart = within(dialog).getByTestId('layer-chart')
+    expect(chart.getAttribute('data-layer-ids')).toBe('mean_temp')
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Global population' }))
+    expect(chart.getAttribute('data-layer-ids')).toBe('population mean_temp')
+    // Opens on the window that holds the shorter record whole.
+    expect(within(dialog).getByRole('button', { name: '25,000 yr' }).getAttribute('aria-pressed')).toBe('true')
     fireEvent.click(within(dialog).getByRole('button', { name: '200 yr' }))
     expect(within(dialog).getByRole('button', { name: '200 yr' }).getAttribute('aria-pressed')).toBe('true')
     fireEvent.keyDown(dialog, { key: 'Escape' })

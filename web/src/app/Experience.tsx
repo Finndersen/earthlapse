@@ -472,7 +472,6 @@ export function Experience() {
   const globeLayersLoaded = layersLoaded(readyManifest, readyLayerData, (entry) => entry.surface === 'globe')
   const regimeEvents = useMemo(() => rawEvents(eventLayers, 'globe-regimes'), [eventLayers])
   const iceAgeLayers = useMemo(() => iceAgeLayersFrom(scalarLayers), [scalarLayers])
-  const chartLayer = chartLayerId === null ? undefined : scalarLayers.get(chartLayerId)
   // ADR-035's `cities` FeatureSet, selected by id the same way the raster layers above are.
   const cities = featureSets.get('cities')?.data.features ?? null
   // ADR-059's `empires` territories, indexed once per published layer file.
@@ -505,6 +504,10 @@ export function Experience() {
         (l) => l.surface === 'hud' && l.dataKind === 'scalar' && l.chartable && !isHiddenFromHud(l.id),
       ),
     [readyManifest],
+  )
+  const chartLayers = useMemo(
+    () => hudScalarEntries.flatMap((entry) => scalarLayers.get(entry.id) ?? []),
+    [hudScalarEntries, scalarLayers],
   )
   const renderHudReadouts = (column: HudColumn) => {
     const rows = hudScalarEntries.flatMap((entry) => {
@@ -866,9 +869,9 @@ export function Experience() {
           }}
         />
       )}
-      {chartLayer && (
-        <Panel label={`${chartLayer.name} chart`} title={chartLayer.name} onClose={() => setChartLayerId(null)} className={styles.chartPanel}>
-          <LayerChart layer={chartLayer} t={t} />
+      {chartLayerId !== null && scalarLayers.has(chartLayerId) && (
+        <Panel label="Chart" title="Chart" onClose={() => setChartLayerId(null)} className={styles.chartPanel}>
+          <LayerChart layers={chartLayers} initialLayerId={chartLayerId} t={t} />
         </Panel>
       )}
       {captionDetailScene && (

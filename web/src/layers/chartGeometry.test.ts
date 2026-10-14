@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { createScalarLayer } from './factories'
-import { fitValueRange, niceTicks, recentWindowsFor, sampleCurve, timeAxis, windowDomain } from './chartGeometry'
+import { defaultRange, fitValueRange, niceTicks, recentWindowsFor, sampleCurve, timeAxis, windowDomain } from './chartGeometry'
 
 describe('timeAxis', () => {
   it('maps the oldest edge to 0 and the newest to 1, round-tripping in between, with ticks inside the span', () => {
@@ -16,7 +16,7 @@ describe('timeAxis', () => {
   })
 
   it('labels a span inside the Holocene with round calendar years', () => {
-    expect(timeAxis([0, 200]).ticks().map((tick) => tick.label)).toEqual(['1850', '1900', '1950', '2000'])
+    expect(timeAxis([0, 200]).ticks().map((tick) => tick.label)).toEqual(['2000', '1950', '1900', '1850'])
   })
 })
 
@@ -26,6 +26,11 @@ describe('recent windows', () => {
     expect(recentWindowsFor([10, 12_025])).toEqual([2_000, 200])
     expect(windowDomain([10, 12_025], 200)).toEqual([10, 200])
     expect(windowDomain([10, 12_025], null)).toEqual([10, 12_025])
+  })
+
+  it('opens a selection on the narrowest window holding its shortest record, else the whole span', () => {
+    expect(defaultRange([25_000, 2_000, 200], [12_015, 4.8e8])).toBe(25_000)
+    expect(defaultRange([25_000, 2_000, 200], [4.8e8])).toBeNull()
   })
 })
 

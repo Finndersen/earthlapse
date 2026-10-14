@@ -569,8 +569,9 @@ viewport. Scalar layers appear as a readout over a sparkline of the story so far
 from the layer's first sample (or, once `t` reaches it, from 10,000 BCE) to `t`, linear value from
 zero to the peak reached (or fitted to its range for °C and metres), so the playhead is always the
 trace's right end (ADR-053 and its amendment). One sparkline component, N layers. Clicking a
-sparkline opens its expanded chart: the whole record with its uncertainty band, labelled axes, the
-playhead and a hover readout, on a linear time axis zoomable to the last 25,000, 2,000 or 200
+sparkline opens the expanded chart on that layer, with toggles to draw the other readouts' layers
+beside it, each on its own value axis: whole records with their uncertainty bands, labelled axes,
+the playhead and a hover readout, on a linear time axis zoomable to the last 25,000, 2,000 or 200
 years (ADR-053 amendment).
 
 ### Event feed
