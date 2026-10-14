@@ -405,7 +405,7 @@ export function stemGains(t: GeoTime, flatBasaltWindows: ReadonlyArray<TimeWindo
       (rampLog(t, 265, 195, 0, 0.5) + rampLog(t, 195, 125, 0, 0.15)) *
         // Electrification retires steam line shafts from the early 1900s (Devine 1983), and
         // the last steam plant goes with late-century deindustrialisation: silent by 2000.
-        rampLog(t, 125, 60, 1, 0.35) *
+        rampLog(t, 125, 60, 1, 0.12) *
         rampLog(t, 60, 25, 1, 0) *
         people,
     ),
