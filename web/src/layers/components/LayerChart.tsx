@@ -134,7 +134,7 @@ export function LayerChart({ layer, t }: LayerChartProps) {
         <div className={styles.timeTicks} aria-hidden="true">
           {axis.ticks().map((tick) => (
             <span key={tick} style={{ left: `${axis.toUnit(tick) * 100}%`, transform: `translateX(${tickLabelShift(axis.toUnit(tick))}%)` }}>
-              {formatAge(tick)}
+              {formatTickAge(tick)}
             </span>
           ))}
         </div>
@@ -142,6 +142,12 @@ export function LayerChart({ layer, t }: LayerChartProps) {
       {unit !== '' && <p className={styles.unitNote}>Values in {unit}</p>}
     </div>
   )
+}
+
+/** A time tick's label: `formatAge`, but "100 yr" rather than "100 years ago", which collides
+ *  with its neighbours on a narrow plot. */
+function formatTickAge(t: GeoTime): string {
+  return t >= 1 && t < 1000 ? `${Math.round(t)} yr` : formatAge(t)
 }
 
 /** A time label's horizontal anchor: centred on its tick, but kept inside the plot at either end. */
