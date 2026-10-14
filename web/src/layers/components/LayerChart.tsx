@@ -24,7 +24,7 @@ import styles from './LayerChart.module.css'
 
 const VIEW_WIDTH = 640
 const VIEW_HEIGHT = 240
-/** Enough to resolve a glacial cycle across a log axis spanning nine decades of age. */
+/** About one sample per pixel of the dialog's widest plot. */
 const SAMPLE_COUNT = 480
 
 export interface LayerChartProps {
