@@ -7964,3 +7964,49 @@ means back to 482 Ma. It is published as the HUD scalar "Global temperature".
 - **Scaling LR04 δ¹⁸O to temperature** for the older glacial cycles: a calibration of our own,
   not a published temperature reconstruction.
 
+## ADR-062 — Licensing: AGPL code, CC BY-NC-SA content, per-source data; non-commercial data admitted
+
+**Status:** accepted — 2026-10-14. Replaces the unwritten "licence gate" that ADR-031, ADR-030's
+basemap alternatives and ADR-061 cite when rejecting non-commercial and share-alike data.
+
+**Context.** The repository had no licence, so nobody could legally reuse or contribute to it.
+The human wants it open to collaboration but not turned into a commercial product, and confirmed
+the site is free and non-commercial. Earlier ADRs rejected HYDE 3.3, EOX Sentinel-2 cloudless and
+Berkeley Earth for non-commercial or share-alike terms under a policy that was never written down.
+
+**Decision.**
+
+- **Code: GNU AGPL v3.0 or later** (`LICENSE`). An open-source licence contributors know, whose
+  network clause requires anyone running a modified version as a website to publish its source,
+  which makes a closed commercial clone unattractive. The About panel links the source.
+- **Original content: CC BY-NC-SA 4.0** (`LICENSE-CONTENT`): the scene book, captions, event and
+  lineage write-ups, and the generated scene and ancestor images. README § Licence lists the
+  paths. Purely machine-generated images may not attract copyright at all; the licence covers
+  whatever does.
+- **Third-party data keeps its own licence**, recorded per source in its manifest and listed in
+  `docs/CREDITS.md`. Non-commercial and share-alike licences are admitted, since the site is
+  non-commercial. A share-alike source's published layer carries that licence, and two different
+  share-alike licences are never merged into one layer. A source with no stated licence needs an
+  ADR (PhanDA's is ADR-061).
+- **Contributions** come in under the licence of what they change, signed off under the Developer
+  Certificate of Origin (`CONTRIBUTING.md`).
+
+**Consequences.**
+
+- The site as published may only be used non-commercially. Monetising it (ads, sponsorship, paid
+  features) would mean removing every non-commercial source first; their manifests name them.
+- The rejections of HYDE 3.3, EOX Sentinel-2 cloudless and Berkeley Earth on licence grounds no
+  longer hold. Each can be reconsidered on its merits; nothing changes until then.
+- **pyGPlates and gplately are GPL-2.0** (pyGPlates explicitly "not any later version"), which is
+  incompatible with the AGPL v3 in a single distributed program. They stay usable because they
+  are an optional extra (`geo`) of the offline pipeline, imported only inside
+  `pipeline/paleogeography.py` and `sources/plates-neoproterozoic/relief.py`; the project never
+  distributes them, and the site contains only their output data. Anyone distributing a bundle
+  that includes them is distributing that combination themselves.
+
+**Rejected.**
+- **PolyForm Noncommercial for the code.** It forbids commercial use outright, but it is not an
+  open-source licence, and some contributors and tools will not work with it.
+- **A contributor licence agreement.** It would allow relicensing later, but adds friction to every
+  contribution; sign-off is enough while the licence is settled.
+

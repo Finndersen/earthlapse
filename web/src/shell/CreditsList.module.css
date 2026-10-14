@@ -48,6 +48,14 @@
   color: var(--hud-dim);
 }
 
+/* The licence note under the byline: small body text, quieter than the description above. */
+.licence {
+  margin: -6px 0 14px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--hud-faint);
+}
+
 .links {
   display: flex;
   flex-wrap: wrap;

@@ -84,6 +84,10 @@ export function CreditsList({ eventLegend, feedbackLink }: CreditsListProps = {}
       </p>
 
       <p className={styles.byline}>Built by Finn Andersen</p>
+      <p className={styles.licence}>
+        Free and non-commercial: code under the GNU AGPL v3, scenes and writing under CC BY-NC-SA 4.0, and each dataset
+        under its own licence, listed below.
+      </p>
 
       <p className={styles.links}>
         <a href="https://github.com/Finndersen/earthlapse" target="_blank" rel="noopener noreferrer">

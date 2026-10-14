@@ -20,6 +20,23 @@ This split is deliberate. Without it you get PRs nobody can merge.
 
 ---
 
+## Licence and sign-off
+
+Contributions are accepted under the licence of what they change (README § Licence): code under
+the AGPL v3.0 or later, original content under CC BY-NC-SA 4.0. Sign off every commit
+(`git commit -s`) to certify the [Developer Certificate of Origin](https://developercertificate.org/):
+that you wrote the change, or otherwise have the right to submit it under that licence.
+
+A new data source keeps its own upstream licence, recorded in its manifest (ADR-062):
+
+- Any licence that allows redistribution with credit is fine, non-commercial and share-alike
+  included.
+- A source whose licence is share-alike has its published layer released under that same licence;
+  never merge two different share-alike licences into one published layer.
+- A source that states no licence at all needs an ADR before it is used.
+
+---
+
 ## Adding a data layer
 
 ### 1. Normalise into one of four shapes

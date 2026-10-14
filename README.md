@@ -239,9 +239,28 @@ layer needs neither: see [`CONTRIBUTING.md`](CONTRIBUTING.md).
 Built on open scientific datasets: PALEOMAP PaleoDEMs and Merdith et al. (2021) plate
 reconstructions (via GPlates), HYDE population and land use, Cliopatria historical polities,
 historical city populations, Natural Earth, ice-core and GEOCARB CO₂, the LR04 benthic stack,
-an ancestor lineage dated from the primary literature, and some 200 individually cited events.
+HadCRUT5, the Last Glacial Maximum Reanalysis and PhanDA global temperatures, an ancestor lineage dated from the primary literature, and some 200 individually cited events.
 
 Every dataset, sound recording and event citation, with licences, is listed in
 [`docs/CREDITS.md`](docs/CREDITS.md), generated from the same manifest as the site's credits
 panel. How each dataset is fetched and processed is in
 [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md).
+
+## Licence
+
+Earthlapse is free and non-commercial, and licensed in three layers (ADR-062):
+
+| What | Licence |
+|---|---|
+| **Code** — everything not listed below: `pipeline/`, `web/`, `sources/*/*.py`, `scripts/`, `deploy/`, tests and docs | [GNU AGPL v3.0 or later](LICENSE) |
+| **Original content** — the scene book, captions and event write-ups (`data/scenes.yaml`, `data/events.yaml`, `data/lineage.yaml`, `data/portraits.yaml`, `data/globe_regimes.yaml`) and the generated scene and ancestor images (`data/pins/`, `data/media/scenes/`, `data/media/portraits/`) | [CC BY-NC-SA 4.0](LICENSE-CONTENT) |
+| **Third-party data** — upstream fixtures (`sources/*/fixture/`), curated data (`data/curated/`), and published layers, textures, vectors and audio derived from it (`data/media/layers/`, `textures/`, `vectors/`, `audio/`) | each source's own licence, listed in [`docs/CREDITS.md`](docs/CREDITS.md) |
+
+The AGPL lets anyone use, study, change and share the code, and requires that anyone who runs a
+modified version as a website offers its full source under the same licence. The content licence
+allows sharing and adapting the scenes and writing with credit, for non-commercial use only, under
+the same terms. Some datasets are themselves non-commercial or share-alike, so the site as
+published can only be used non-commercially.
+
+Copyright © 2026 Finn Andersen and Earthlapse contributors.
+
