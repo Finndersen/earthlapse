@@ -1,7 +1,7 @@
 'use client'
 
 /** Text-only ancestor readout (DESIGN §10): an "Ancestor since <tDivergence>" kicker over the
- *  node's label and its representative organism when known. */
+ *  node's label. */
 
 import { formatGeoTime } from '@/timeline'
 import type { GeoTime, Layer, NodeValue } from '@/types/layer'
@@ -21,19 +21,7 @@ export function AncestorReadout({ layer, t }: AncestorReadoutProps) {
       <span className={styles.label}>
         Ancestor{node !== null && ` since ${formatGeoTime(node.tDivergence)}`}
       </span>
-      {node === null ? (
-        <span className={styles.noData}>no data</span>
-      ) : (
-        <>
-          <strong className={styles.ancestorName}>{node.label}</strong>
-          {node.representative !== undefined && (
-            <span className={styles.ancestorRepresentative}>
-              <span className={styles.ancestorDash}> — </span>
-              {node.representative}
-            </span>
-          )}
-        </>
-      )}
+      {node === null ? <span className={styles.noData}>no data</span> : <strong className={styles.ancestorName}>{node.label}</strong>}
     </span>
   )
 }

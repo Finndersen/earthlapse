@@ -8,10 +8,10 @@
  * desktop and phone alike).
  *
  * Without this wrapper, a plain `<div>` here shrink-wraps to its widest child — the portrait
- * plate, or the specimen line below it, whichever is wider at a given `t`. The plate itself
+ * plate, or the name line below it, whichever is wider at a given `t`. The plate itself
  * has no alignment of its own (a block box just starts flush at that wrapper's near edge), so
- * it only lined up with the slot's fixed edge when the specimen line happened to be no wider
- * than the plate; a longer specimen line (a different ancestor) widened the wrapper and left
+ * it only lined up with the slot's fixed edge when the name line happened to be no wider
+ * than the plate; a longer name line (a different ancestor) widened the wrapper and left
  * the plate stranded short of the edge — visibly drifting as `t` scrubbed across ancestors.
  * `align-items: inherit` on `.panel` (matching `<AncestorReadout>`'s own use of it, one level
  * further in) closes that gap: both children — the portrait's fixed-size box and the readout's

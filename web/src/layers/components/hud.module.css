@@ -123,18 +123,6 @@
   color: var(--hud-ink, #efe9dc);
 }
 
-.ancestorDash {
-  display: none;
-}
-
-.ancestorRepresentative {
-  font-family: var(--hud-serif, Georgia, serif);
-  font-size: 13.5px;
-  font-style: italic;
-  line-height: 1.4;
-  color: var(--hud-dim, rgba(239, 233, 220, 0.62));
-}
-
 .asOf {
   font-family: var(--hud-mono, ui-monospace, monospace);
   font-size: 10px;
@@ -146,7 +134,7 @@
 /* Portrait above readout, aligned as one column to the edge the slot around it uses
    (flex-end, both on desktop and on a phone — see ShellLayout's `.ancestor`) via
    `align-items: inherit`, same as `.ancestor` below does for its own text. This is what keeps
-   the portrait's edge locked to the readout text's edge regardless of specimen-line width;
+   the portrait's edge locked to the readout text's edge regardless of name width;
    see AncestorPanel's doc comment for why a plain unstyled wrapper let it drift. */
 .panel {
   display: flex;
@@ -184,11 +172,8 @@
 
 /* Phone: the ancestor panel shares row 1 with the globe orb (ShellLayout.module.css's
    `.ancestor`) instead of its own wide band, so the plate matches the orb's own size and the
-   name/since text collapses to short caps lines under it — the same treatment as the globe's
-   own label under its orb. The italic secondary name (`.ancestorRepresentative`, e.g. "LUCA
-   (hypothetical; no direct fossil)") never fits a phone-width corner in 1-2 short lines
-   without reading as noise, so it is visually hidden rather than truncated mid-word — clipped
-   off-screen, not `display: none`, so a screen reader still gets it. */
+   kicker and name collapse to short caps lines under it — the same treatment as the globe's
+   own label under its orb. */
 @media (max-width: 760px), (orientation: landscape) and (max-height: 500px) {
   .portrait {
     width: var(--orb-size, 84px);
@@ -250,17 +235,5 @@
   .asOf {
     font-size: 8px;
     letter-spacing: 0.18em;
-  }
-
-  .ancestorRepresentative {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    padding: 0;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
   }
 }
