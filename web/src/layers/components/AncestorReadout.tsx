@@ -1,6 +1,6 @@
 'use client'
 
-/** Text-only ancestor readout (DESIGN §10): a "Your ancestor since <tDivergence>" kicker over the
+/** Text-only ancestor readout (DESIGN §10): an "Ancestor since <tDivergence>" kicker over the
  *  node's label and its representative organism when known. */
 
 import { formatGeoTime } from '@/timeline'
@@ -19,7 +19,7 @@ export function AncestorReadout({ layer, t }: AncestorReadoutProps) {
   return (
     <span className={styles.ancestor}>
       <span className={styles.label}>
-        Your ancestor{node !== null && ` since ${formatGeoTime(node.tDivergence)}`}
+        Ancestor{node !== null && ` since ${formatGeoTime(node.tDivergence)}`}
       </span>
       {node === null ? (
         <span className={styles.noData}>no data</span>

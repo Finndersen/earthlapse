@@ -13,8 +13,8 @@ describe('<AncestorReadout>', () => {
     const text = render(<AncestorReadout layer={layer} t={5e7} />).container.textContent ?? ''
     expect(text).toContain('First primate')
     expect(text).toContain('Purgatorius')
-    expect(text).toMatch(/^Your ancestor since \S/)
+    expect(text).toMatch(/^Ancestor since \S/)
     cleanup()
-    expect(render(<AncestorReadout layer={layer} t={4.3e9} />).container.textContent).toBe('Your ancestorno data')
+    expect(render(<AncestorReadout layer={layer} t={4.3e9} />).container.textContent).toBe('Ancestorno data')
   })
 })

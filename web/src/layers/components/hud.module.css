@@ -206,10 +206,12 @@
     letter-spacing: 0.16em;
   }
 
-  /* Wraps rather than truncating the date in the narrow corner. */
+  /* Tighter tracking keeps "Ancestor since 3.5 Ga" on one line in the narrow corner. */
   .ancestor > .label {
     max-width: 100%;
-    white-space: normal;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: 0.1em;
   }
 
   .noData {

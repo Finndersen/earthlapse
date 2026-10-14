@@ -36,7 +36,7 @@ export function isReadoutHiddenAt(timeDomain: readonly [GeoTime, GeoTime], t: Ge
 }
 
 /** Which HUD column a scalar readout sits in: `'globe'` under the globe orb (left), or
- *  `'ancestor'` under the "Your ancestor" panel (right), right-aligned to that column. */
+ *  `'ancestor'` under the ancestor panel (right), right-aligned to that column. */
 export type HudColumn = 'globe' | 'ancestor'
 
 /** Layers placed somewhere other than the default `'globe'` column. Population reads with the
