@@ -1,0 +1,16 @@
+# See docs/DATA_SOURCES.md for field meanings, and README.md for the parsing rules.
+#
+# The world total from 1950 to the AD 2025 present, as `population_wpp`. `pipeline/curated.py`
+# splices it ahead of HYDE's `population` (sources/hyde), which keeps 10,000 BCE -> 1950 (ADR-063).
+
+name = "un-wpp"
+title = "World Population Prospects 2024: world total population, 1950-2025"
+url = "https://population.un.org/wpp/assets/Excel%20Files/1_Indicator%20(Standard)/CSV_FILES/WPP2024_TotalPopulationBySex.csv.gz"
+sha256 = "66b84489fd7875b62de9b40d960b803b8c8439367c98deab89c2f770970925b9"
+licence = "CC BY 3.0 IGO (United Nations, Department of Economic and Social Affairs, Population Division)"
+citation = "United Nations, Department of Economic and Social Affairs, Population Division (2024). World Population Prospects 2024, Online Edition. https://population.un.org/wpp/"
+time_domain = [75.0, 0.0]  # years before the AD 2025 present, [oldest, newest] -- 1950 .. 2025
+output_shape = "TimeSeries"
+interpolation = "log-linear"
+volume_bytes = 16980593  # measured: the gzipped CSV, every location and variant
+storage_tier = "git"

@@ -4,7 +4,8 @@ This is the only module that reads data/curated/ (ADR-002). Sources write throug
 `write_shape`; everything downstream goes through `load_world(...).at(t)`.
 
 File convention: `<curated_dir>/<shape.id>.parquet`, one file per shape instance. The shape id
-is also the key `WorldModel` registers it under, so a TimeSeries must be named for the key
+is also the key `WorldModel` registers it under (bar `SERIES_SPLICES`, which joins series across
+sources), so a TimeSeries must be named for the key
 `WorldModel.at` reads ("co2", "day_length", ...). One row per sample / event / frame / node;
 shape-level fields (unit, interpolation) live in the parquet schema metadata.
 """
@@ -12,6 +13,7 @@ shape-level fields (unit, interpolation) live in the parquet schema metadata.
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Final
 
@@ -157,6 +159,35 @@ def read_shape(path: Path) -> CuratedShape:
     return shape
 
 
+SERIES_SPLICES: Final[Mapping[str, tuple[str, ...]]] = {
+    # ADR-063: UN World Population Prospects from 1950, HYDE's reconstruction before it.
+    "population": ("population_wpp", "population"),
+}
+"""Series joined across sources, by the id the joined series registers under, newest segment
+first. A segment whose source is absent is skipped."""
+
+
+def splice_series(series_id: str, newest_first: Sequence[TimeSeries]) -> TimeSeries:
+    """One series from `newest_first`: each segment keeps only samples strictly older than every
+    sample of the segments before it, the rule a source applies to its own multi-file splice.
+    Segments must agree on unit and interpolation and declare no gaps, which a splice could not
+    carry across."""
+    first = newest_first[0]
+    for segment in newest_first:
+        if (segment.unit, segment.interpolation) != (first.unit, first.interpolation):
+            raise CuratedFormatError(f"{series_id}: {segment.id} differs in unit or interpolation")
+        if segment.gaps:
+            raise CuratedFormatError(f"{series_id}: {segment.id} declares gaps")
+    samples = []
+    boundary = -float("inf")
+    for segment in newest_first:
+        samples.extend(s for s in segment.samples if s.t > boundary)
+        boundary = max(boundary, segment.domain[1])
+    return TimeSeries(
+        id=series_id, unit=first.unit, interpolation=first.interpolation, samples=samples
+    )
+
+
 def load_world(curated_dir: Path) -> WorldModel:
     """Every curated file, registered by shape id. An absent source is simply unregistered,
     so `WorldModel.at` yields None for its fields rather than failing."""
@@ -179,4 +210,8 @@ def load_world(curated_dir: Path) -> WorldModel:
                 trees[tree.id] = tree
             case FeatureSet() as fs:
                 features[fs.id] = fs
+    for series_id, segment_ids in SERIES_SPLICES.items():
+        present = [series[i] for i in segment_ids if i in series]
+        if present:
+            series[series_id] = splice_series(series_id, present)
     return WorldModel(series=series, rasters=rasters, events=events, trees=trees, features=features)

@@ -8,7 +8,13 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
-from pipeline.curated import CuratedFormatError, load_world, path_for, read_shape, write_shape
+from pipeline.curated import (
+    CuratedFormatError,
+    load_world,
+    path_for,
+    read_shape,
+    write_shape,
+)
 from pipeline.shapes import (
     ArrivalEffect,
     ArrivalKind,
@@ -177,3 +183,21 @@ def test_load_world_registers_each_shape_by_id(tmp_path: Path) -> None:
     assert state.atmosphere.co2_ppm == 280.0
     assert state.plates.elevation is not None
     assert state.biosphere.ancestor == LINEAGE.nodes[0]
+
+
+def test_load_world_splices_un_population_ahead_of_hyde(tmp_path: Path) -> None:
+    def population(series_id: str, points: dict[float, float]) -> TimeSeries:
+        samples = [Sample(t=t, value=v) for t, v in points.items()]
+        return TimeSeries(
+            id=series_id, unit="people", interpolation=Interpolation.LOG_LINEAR, samples=samples
+        )
+
+    write_shape(population("population", {10.0: 7.26e9, 75.0: 2.53e9, 225.0: 9.4e8}), tmp_path)
+    write_shape(population("population_wpp", {0.0: 8.23e9, 10.0: 7.47e9, 75.0: 2.49e9}), tmp_path)
+    spliced = load_world(tmp_path).series["population"]
+    assert [(s.t, s.value) for s in spliced.samples] == [
+        (0.0, 8.23e9),
+        (10.0, 7.47e9),
+        (75.0, 2.49e9),
+        (225.0, 9.4e8),
+    ]

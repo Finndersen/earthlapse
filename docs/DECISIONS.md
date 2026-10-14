@@ -8023,3 +8023,31 @@ Berkeley Earth for non-commercial or share-alike terms under a policy that was n
 - **A contributor licence agreement.** It would allow relicensing later, but adds friction to every
   contribution; sign-off is enough while the licence is settled.
 
+## ADR-063 — World population from UN WPP 2024 since 1950, joined to HYDE 3.2.1 across sources
+
+**Status:** accepted — 2026-10-14.
+
+**Context.** The HUD's population came from HYDE 3.2.1 alone, whose last timestep is 2015, so at
+the present it read "7.3 billion, as of 2015" against a real ~8.2 billion. HYDE 3.3 runs to 2023
+and is licence-compatible since ADR-062, but its only host (Utrecht University's Yoda) answers
+automated requests with a bot challenge, so a `fetch.py` cannot download it. Re-running
+`sources/hyde` would also re-fetch ~1.7 GB of grids that feed the globe's maps, which need no
+change.
+
+**Decision.**
+
+- **A new source, `un-wpp`,** emits the World medium-variant total from WPP 2024 as
+  `population_wpp`: annual from 1950, estimates to 2023 and the medium projection for 2024–25.
+- **`pipeline/curated.py` joins series across sources** through a declared table,
+  `SERIES_SPLICES`, applying at load the same newest-first rule sources use for their own
+  multi-file splices. `population` is `population_wpp` then HYDE's `population`, so publish and
+  `WorldState` read one series. `sources/hyde` is untouched, and its maps stay HYDE 3.2.1 to 2015.
+- **The seam is at 1950**, where the UN record starts and the two agree to 1.5%; by 2015 they
+  differ by 2.9%.
+
+**Rejected.**
+- **HYDE 3.3.** Unreachable by a reproducible fetch (above), and it still ends two years short.
+- **Splicing inside `sources/hyde`.** It would make the population figure depend on re-running
+  the 1.7 GB HYDE fetch.
+- **Joining at 2015.** HYDE's last decades are its least independent and the step is larger.
+

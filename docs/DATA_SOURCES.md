@@ -345,7 +345,9 @@ the population-density globe overlay's own "data simply ends, hold" convention
 /components/ScalarReadout.tsx`), since silently freezing the number would misrepresent a 2015
 total as a live reading for right now. This hold is driven by the layer's own declared domain,
 not a special case for this one layer id, so it applies identically to any future scalar layer
-whose data ends before the present.
+whose data ends before the present. Since ADR-063 the published `population` joins
+`un-wpp` from 1950, so it reaches the present and the hold no longer applies to it; this
+curated series still ends at 2015.
 
 ---
 
@@ -517,6 +519,25 @@ readout under the globe. Scene prompts still use each scene's hand-written `mean
 Clark et al. 2024 (4.5 Ma, glacial-cycle resolution) would fill 24 ka–4.5 Ma, but its data were
 in neither NOAA NCEI nor PANGAEA. Berkeley Earth was rejected for its CC BY-NC licence (as HYDE 3.3
 was, ADR-031).
+
+---
+
+## `un-wpp` — World population, 1950 → AD 2025
+
+| | |
+|---|---|
+| **Source** | UN DESA Population Division, World Population Prospects 2024 |
+| **Access** | **VERIFIED.** `population.un.org/wpp/assets/Excel Files/1_Indicator (Standard)/CSV_FILES/WPP2024_TotalPopulationBySex.csv.gz`; sha256 in `manifest.toml` |
+| **Format** | gzipped CSV, every location and variant |
+| **Coverage** | annual, 1950 → 2025 (estimates to 2023, medium projection after) |
+| **Volume** | measured 16,980,593 bytes raw; 76 curated samples |
+| **Licence** | CC BY 3.0 IGO |
+| **Shape** | `TimeSeries` `population_wpp` (people, log-linear) |
+| **Storage** | **git**, committed parquet |
+
+**Integration** — joined ahead of HYDE's `population` at load (`pipeline/curated.py`'s
+`SERIES_SPLICES`, ADR-063), so `WorldState.humans.population` and the HUD's "Global population"
+read HYDE before 1950 and the UN from 1950 to the present.
 
 ---
 

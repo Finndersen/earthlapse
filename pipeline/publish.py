@@ -160,10 +160,8 @@ class LayerSpec:
 SCALAR_LAYERS = (
     LayerSpec("co2", "Atmospheric CO₂", LayerSurface.HUD, "co2-o2", chartable=True),
     LayerSpec("day_length", "Day length", LayerSurface.HUD, "astronomy", chartable=False),
-    # ADR-031 amendment "global population total": HYDE 3.2's derived world-population-total
-    # series, from the same source as the population-density globe overlay. chartable=True
-    # (unlike day_length) -- this is the one HUD number the readout column has nothing else
-    # covering, so it earns a sparkline/chart the way co2's own does.
+    # HYDE 3.2's world total before 1950 and UN WPP 2024's after, joined by
+    # `pipeline/curated.py`'s SERIES_SPLICES (ADR-063); credited to HYDE, the longer record.
     LayerSpec("population", "Global population", LayerSurface.HUD, "hyde", chartable=True),
     LayerSpec("mean_temp", "Global temperature", LayerSurface.HUD, "global-temp", chartable=True),
     # LR04-derived (sources/lr04): drive the globe's ice-age caps and shelf exposure, not the HUD.

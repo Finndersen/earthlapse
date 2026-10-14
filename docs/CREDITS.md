@@ -120,6 +120,14 @@ Every node in data/lineage.yaml carries its own specific citation. Principal syn
 
 Source directory: [`sources/lineage/`](../sources/lineage/)
 
+### [World Population Prospects 2024: world total population, 1950-2025](https://population.un.org/wpp/assets/Excel%20Files/1_Indicator%20(Standard)/CSV_FILES/WPP2024_TotalPopulationBySex.csv.gz)
+
+United Nations, Department of Economic and Social Affairs, Population Division (2024). World Population Prospects 2024, Online Edition. https://population.un.org/wpp/
+
+**Licence:** CC BY 3.0 IGO (United Nations, Department of Economic and Social Affairs, Population Division)
+
+Source directory: [`sources/un-wpp/`](../sources/un-wpp/)
+
 ## Ambient sound
 
 | Recording | Author | Licence |

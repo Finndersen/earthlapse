@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "buildId": "b2254832e8e84691",
+  "buildId": "5013c18334783264",
   "assetBase": "/media",
   "scenes": [
     {
@@ -2473,7 +2473,7 @@
       "surface": "hud",
       "dataKind": "scalar",
       "timeDomain": [
-        10.0,
+        0.0,
         12025.0
       ],
       "source": "hyde",
@@ -6838,6 +6838,13 @@
       "citation": "Merdith, A.S., Collins, A.S., Williams, S.E., Pisarevsky, S., Foden, J.D., Archibald, D.B., Blades, M.L., Alessio, B.L., Armistead, S., Plavsa, D., Clark, C. and Muller, R.D. (2021). Extending full-plate tectonic models into deep time: Linking the Neoproterozoic and the Phanerozoic. Earth-Science Reviews 214, 103477. doi:10.1016/j.earscirev.2020.103477. Model: Zenodo 4485738 (CC-BY-4.0).",
       "licence": "CC BY 4.0",
       "url": "https://zenodo.org/api/records/4485738/files/SM2_4485738_V2.zip/content"
+    },
+    {
+      "sourceId": "un-wpp",
+      "title": "World Population Prospects 2024: world total population, 1950-2025",
+      "citation": "United Nations, Department of Economic and Social Affairs, Population Division (2024). World Population Prospects 2024, Online Edition. https://population.un.org/wpp/",
+      "licence": "CC BY 3.0 IGO (United Nations, Department of Economic and Social Affairs, Population Division)",
+      "url": "https://population.un.org/wpp/assets/Excel%20Files/1_Indicator%20(Standard)/CSV_FILES/WPP2024_TotalPopulationBySex.csv.gz"
     }
   ]
 }
