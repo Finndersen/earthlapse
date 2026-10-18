@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "buildId": "fded56afc3e97b06",
+  "buildId": "510f033ab7322ecc",
   "assetBase": "/media",
   "scenes": [
     {
@@ -2655,7 +2655,7 @@
       ],
       "source": "cliopatria",
       "chartable": false,
-      "data": "layers/empires-ffb45e8950.json"
+      "data": "layers/empires-dd3f7fb1e9.json"
     }
   ],
   "events": [

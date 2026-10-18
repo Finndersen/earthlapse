@@ -262,11 +262,16 @@ Republic, is ~900 km².
 
 **Thinning** (`_thin`, per member, in time order): a resolved segment starts a new snapshot when
 its IoU with the last *kept* snapshot is below **0.9**, or their symmetric difference exceeds
-**250,000 km²**, or after a real gap (`next.from > prev.to + 1`); otherwise the kept snapshot
+**250,000 km²**, or one of them has a polygon of at least 500 km² lying more than half outside
+the other (a landmass gained or lost), or after a real gap (`next.from > prev.to + 1`); otherwise the kept snapshot
 extends over it. Both measures are computed in a Lambert cylindrical equal-area projection, so
 areas are real km². IoU alone at 0.9 missed changes that are small relative to a vast empire
 but obvious on screen (the Ottoman losses of 1699, the sale of Alaska — Russia kept only 5
-snapshots); the symmetric-difference rule brings the Ottomans to 38 and Russia to 39. A
+snapshots); the symmetric-difference rule brings the Ottomans to 38 and Russia to 39. Neither
+sees an island beside a large realm: Madeira, Portuguese from 1422, is under 1% of Portugal, so
+without the landmass rule it stayed undrawn until the accumulated drift crossed 0.9 in 1468.
+The landmass rule takes the roster from 937 snapshots to 1,217 and the geometry file from
+395 KB to 451 KB gzipped. A
 snapshot keeps its first window's geometry, `Area`, `SeshatID` and representative point.
 
 **Time semantics.** `t_start = 2025 − from_year`, `t_end = 2025 − (to_year + 1)`, and a
@@ -404,28 +409,29 @@ is **49,215,745 bytes** (sha256-pinned in `manifest.toml`); the extracted `cliop
 **186,488,764 bytes**, parsed once per build (~20 s for the whole normalise, cached between
 `normalise` and `write_outputs`).
 
-Curated, measured on the 28-lineage roster (ADR-059): **804 snapshots** in
-`cliopatria_polities.parquet` (41 KB), from 1,755 resolved segments. At most 10 lineages are
-active at once (202–171 BCE). Per lineage:
+Curated, measured on the 29-lineage roster (ADR-059): **1,217 snapshots** in
+`cliopatria_polities.parquet` (57 KB). Per lineage:
 
 | Lineage | Snapshots | Lineage | Snapshots |
 |---|---|---|---|
-| rome | 109 | timurid | 34 |
-| china | 104 | hre | 34 |
-| persia | 60 | caliphate | 32 |
-| spain | 59 | mesopotamia | 27 |
-| britain | 48 | mongol | 23 |
-| russia | 39 | franks | 23 |
-| ottoman | 38 | assyria | 15 |
-| egypt | 28 | seljuk | 14 |
-| macedon | 28 | india, khmer, xiongnu | 11 each |
-| carthage, tibet | 10 each | aztec | 9 |
-| axum | 8 | inca, sahel | 6 each |
-| maya | 4 | hittites | 3 |
+| rome | 141 | mongol | 23 |
+| britain | 138 | carthage | 19 |
+| china | 127 | assyria | 15 |
+| spain | 122 | seljuk | 15 |
+| portugal | 93 | india | 11 |
+| persia | 68 | khmer | 11 |
+| ottoman | 63 | xiongnu | 11 |
+| russia | 63 | aztec | 10 |
+| hre | 56 | tibet | 10 |
+| caliphate | 37 | axum | 8 |
+| egypt | 36 | sahel | 6 |
+| timurid | 36 | inca | 6 |
+| macedon | 33 | maya | 4 |
+| mesopotamia | 27 | hittites | 3 |
+| franks | 25 | | |
 
-Geometry file: **3,218,172 bytes** raw, **298,905 bytes** gzip -9, ~259k vertices; every polygon
-valid after `set_precision`. The published `layers/empires.json` (snapshot metadata only) is
-~208 KB, ~33 KB gzipped.
+Geometry file: **5,785,380 bytes** raw, **450,569 bytes** gzip -9. The published
+`layers/empires.json` (snapshot metadata only) is ~343 KB, ~44 KB gzipped.
 
 ## Storage tier chosen
 

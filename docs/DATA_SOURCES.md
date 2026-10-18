@@ -420,7 +420,7 @@ field, with names on hover only, in the same shared tooltip arrival arcs and inh
 | **Volume** | measured: 49,215,745 bytes raw zip; 186,488,764 bytes extracted GeoJSON; 14,945 total features (14,108 `Type == "POLITY"`); curated to the 28-lineage empire roster: 1,755 resolved member segments thinned to 804 territory snapshots (`sources/cliopatria/README.md` "Measured volume") |
 | **Licence** | **CC BY 4.0** — confirmed both via the Zenodo record's own `license.id` and the repository's committed `LICENSE.md` |
 | **Shape** | `FeatureSet` (id `cliopatria_polities`, one `Feature` per territory snapshot: label anchor, area, half-open span — ADR-037, ADR-059), plus a vector geometry media file the shape does not hold |
-| **Storage** | raw not committed (gitignored, re-fetched from Zenodo); curated parquet (~44 KB) → git; geometry `data/media/vectors/cliopatria_territories-<hash10>.json` (3.2 MB, 0.30 MB gzipped) → plain git, written by `normalise.py`'s `write_outputs` |
+| **Storage** | raw not committed (gitignored, re-fetched from Zenodo); curated parquet (~57 KB) → git; geometry `data/media/vectors/cliopatria_territories-<hash10>.json` (5.8 MB, 0.45 MB gzipped) → plain git, written by `normalise.py`'s `write_outputs` |
 
 **Processing** — `Type != "POLITY"` rows (`LEADER`/`GROUP`/`EVENT`/`ARMY`) are dropped first.
 Every raw `Name`'s wrapping `"(...)"` pair is stripped (a merge into an existing bare name, or a
@@ -443,8 +443,10 @@ their full lifespans:
   latest `FromYear` wins a tie. A window under 500 km² counts as absent (degenerate slivers such
   as Han 6–13 CE at 143 km²).
 - **Thinning.** A member's resolved segments merge into the last kept snapshot unless IoU drops
-  below 0.9, the symmetric difference exceeds 250,000 km² (both in an equal-area projection), or
-  there is a gap. Per lineage: Rome 109 snapshots, China 104, Persia 60, down to the Hittites' 3.
+  below 0.9, the symmetric difference exceeds 250,000 km² (both in an equal-area projection), a
+  landmass of at least 500 km² is gained or lost (an island such as Madeira, under 1% of
+  Portugal), or there is a gap. Per lineage: Rome 141 snapshots, Britain 138, China 127, down to
+  the Hittites' 3.
 - **Time.** `t_start = 2025 − from`, `t_end = 2025 − (to + 1)`; a snapshot is active for
   `t_end < t ≤ t_start`, so the curated domain is t = 5425 → 124.
 

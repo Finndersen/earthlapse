@@ -78,6 +78,12 @@ SYMDIFF_KEEP_KM2 = 250_000.0
 starts a new snapshot even when the IoU is high -- a 5% change to a very large empire (the
 Ottoman losses of 1699, Russia's sale of Alaska) is still a change a viewer would notice."""
 
+LANDMASS_INSIDE_MAX = 0.5
+"""Thinning: a polygon of at least `MIN_AREA_KM2` with less than this share of its area inside
+the other snapshot is a landmass gained or lost (an island, a detached outpost). It starts a new
+snapshot however small it is beside the whole: Madeira is under 1% of Portugal. A share rather
+than plain disjointness, so the same island redrawn a little differently still matches."""
+
 SIMPLIFY_TOLERANCE_DEG = 0.1
 """About one pixel of the 4096-wide equirectangular canvas the web rasterises into."""
 
@@ -407,12 +413,26 @@ def _equal_area(geometry: BaseGeometry) -> BaseGeometry:
     return projected if projected.is_valid else projected.buffer(0)
 
 
+def _has_landmass_outside(geometry: BaseGeometry, other: BaseGeometry) -> bool:
+    """Whether `geometry` has a polygon of at least `MIN_AREA_KM2` lying mostly outside `other`."""
+    return any(
+        part.area >= MIN_AREA_KM2
+        and part.intersection(other).area < LANDMASS_INSIDE_MAX * part.area
+        for part in getattr(geometry, "geoms", (geometry,))
+    )
+
+
 def _changed(kept: BaseGeometry, candidate: BaseGeometry) -> bool:
     """Whether `candidate` differs enough from `kept` (both equal-area) to be its own snapshot."""
     union = kept.union(candidate).area
     intersection = kept.intersection(candidate).area
     iou = intersection / union if union else 1.0
-    return iou < IOU_KEEP or union - intersection > SYMDIFF_KEEP_KM2
+    return (
+        iou < IOU_KEEP
+        or union - intersection > SYMDIFF_KEEP_KM2
+        or _has_landmass_outside(candidate, kept)
+        or _has_landmass_outside(kept, candidate)
+    )
 
 
 def _thin(segments: list[_Segment]) -> list[Snapshot]:

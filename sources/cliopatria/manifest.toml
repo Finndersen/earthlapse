@@ -22,7 +22,7 @@ time_domain = [5.425e3, 1.24e2]
 output_shape = "FeatureSet"  # cliopatria_polities: one Feature per territory snapshot (label anchor, area, span)
 interpolation = "step"  # a snapshot holds over its half-open span; the web crossfades between active sets, never morphs polygons
 volume_bytes = 49215745  # measured: the Zenodo repository-archive zip actually downloaded (see README.md "Measured volume")
-storage_tier = "git"  # the curated FeatureSet parquet and the ~3 MB geometry JSON are both plain git
+storage_tier = "git"  # the curated FeatureSet parquet and the ~6 MB geometry JSON are both plain git
 outputs = [
     "data/media/vectors/cliopatria_territories-*.json",  # written by normalise.py's write_outputs() hook, content-hashed
 ]

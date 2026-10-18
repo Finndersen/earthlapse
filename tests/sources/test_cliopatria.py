@@ -97,7 +97,17 @@ def test_a_roster_clamp_trims_a_members_windows(cliopatria_normalise: ModuleType
     assert [f.estimates[0].t_end for f in shape.features] == [2025.0 + 197, 2025.0 - 231]
 
 
-def _window(module: ModuleType, years: tuple[int, int], *, paren: bool, width: float = 10.0):
+def _window(
+    module: ModuleType,
+    years: tuple[int, int],
+    *,
+    paren: bool,
+    width: float = 10.0,
+    island: bool = False,
+):
+    geometry = box(0.0, 0.0, width, 10.0)
+    if island:
+        geometry = geometry.union(box(-20.0, 0.0, -19.7, 0.3))  # ~1,100 km^2 offshore
     return module._Window(
         polity="P",
         from_year=years[0],
@@ -105,7 +115,7 @@ def _window(module: ModuleType, years: tuple[int, int], *, paren: bool, width: f
         area_km2=1.0,
         seshat_id="",
         parenthesised=paren,
-        geometry=box(0.0, 0.0, width, 10.0),
+        geometry=geometry,
     )
 
 
@@ -126,7 +136,7 @@ def test_resolution_prefers_a_bare_window_and_fills_gaps_from_parenthesised_ones
     ]
 
 
-def test_thinning_merges_small_changes_and_keeps_large_ones_and_gaps(
+def test_thinning_merges_small_changes_and_keeps_large_ones_gaps_and_landmasses(
     cliopatria_normalise: ModuleType,
 ) -> None:
     segment = cliopatria_normalise._Segment
@@ -137,7 +147,10 @@ def test_thinning_merges_small_changes_and_keeps_large_ones_and_gaps(
     wide = _window(cliopatria_normalise, (50, 59), paren=False, width=90.0)
     # IoU 0.97, but ~370,000 km^2 changes hands.
     wider = _window(cliopatria_normalise, (60, 69), paren=False, width=93.0)
-    windows = (base, nudged, after_gap, grown, wide, wider)
+    # IoU 0.999, but an island is gained, then lost.
+    with_island = _window(cliopatria_normalise, (70, 79), paren=False, width=93.0, island=True)
+    without_island = _window(cliopatria_normalise, (80, 89), paren=False, width=93.0)
+    windows = (base, nudged, after_gap, grown, wide, wider, with_island, without_island)
 
     snapshots = cliopatria_normalise._thin([segment(w.from_year, w.to_year, w) for w in windows])
 
@@ -147,6 +160,8 @@ def test_thinning_merges_small_changes_and_keeps_large_ones_and_gaps(
         (40, 49),
         (50, 59),
         (60, 69),
+        (70, 79),
+        (80, 89),
     ]
     assert snapshots[0].geometry is base.geometry
 

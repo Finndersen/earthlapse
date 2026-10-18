@@ -1,6 +1,6 @@
 {
   "id": "empires",
-  "geometry": "vectors/cliopatria_territories-f77da43ea1.json",
+  "geometry": "vectors/cliopatria_territories-5438c65fda.json",
   "lineages": [
     {
       "id": "egypt",
@@ -1432,7 +1432,7 @@
       "member": 7,
       "label": "Twenty-sixth Dynasty of Egypt",
       "tStart": 2640.0,
-      "tEnd": 2525.0,
+      "tEnd": 2575.0,
       "lat": 27.511643409729004,
       "lon": 31.047548704795215,
       "areaKm2": 452849.4488884285
@@ -1482,6 +1482,17 @@
       "areaKm2": 569734.2051978204
     },
     {
+      "id": "twenty-sixth-dynasty-of-egypt-550bce",
+      "lineage": "egypt",
+      "member": 7,
+      "label": "Twenty-sixth Dynasty of Egypt",
+      "tStart": 2575.0,
+      "tEnd": 2525.0,
+      "lat": 27.511643409729004,
+      "lon": 31.047548704795215,
+      "areaKm2": 464286.9318627058
+    },
+    {
       "id": "achaemenid-empire-540bce",
       "lineage": "persia",
       "member": 0,
@@ -1509,7 +1520,7 @@
       "member": 0,
       "label": "Achaemenid Empire",
       "tStart": 2525.0,
-      "tEnd": 2429.0,
+      "tEnd": 2505.0,
       "lat": 33.553802490234375,
       "lon": 56.744262143938066,
       "areaKm2": 5553005.606279997
@@ -1520,7 +1531,7 @@
       "member": 0,
       "label": "Carthage",
       "tStart": 2525.0,
-      "tEnd": 2475.0,
+      "tEnd": 2505.0,
       "lat": 36.85,
       "lon": 10.32,
       "areaKm2": 124727.75760027286
@@ -1548,6 +1559,28 @@
       "areaKm2": 906.4470584672355
     },
     {
+      "id": "achaemenid-empire-480bce",
+      "lineage": "persia",
+      "member": 0,
+      "label": "Achaemenid Empire",
+      "tStart": 2505.0,
+      "tEnd": 2475.0,
+      "lat": 33.71455001831055,
+      "lon": 56.63822881874275,
+      "areaKm2": 5623180.476580744
+    },
+    {
+      "id": "carthage-480bce",
+      "lineage": "carthage",
+      "member": 0,
+      "label": "Carthage",
+      "tStart": 2505.0,
+      "tEnd": 2475.0,
+      "lat": 36.85,
+      "lon": 10.32,
+      "areaKm2": 128961.93786806142
+    },
+    {
       "id": "macedonian-empire-480bce",
       "lineage": "macedon",
       "member": 0,
@@ -1559,12 +1592,23 @@
       "areaKm2": 23355.005552051753
     },
     {
+      "id": "achaemenid-empire-450bce",
+      "lineage": "persia",
+      "member": 0,
+      "label": "Achaemenid Empire",
+      "tStart": 2475.0,
+      "tEnd": 2429.0,
+      "lat": 33.553802490234375,
+      "lon": 56.744262143938066,
+      "areaKm2": 5527220.249363336
+    },
+    {
       "id": "carthage-450bce",
       "lineage": "carthage",
       "member": 0,
       "label": "Carthage",
       "tStart": 2475.0,
-      "tEnd": 2264.0,
+      "tEnd": 2429.0,
       "lat": 36.85,
       "lon": 10.32,
       "areaKm2": 198257.78151544338
@@ -1603,15 +1647,37 @@
       "areaKm2": 4993928.541167605
     },
     {
+      "id": "carthage-404bce",
+      "lineage": "carthage",
+      "member": 0,
+      "label": "Carthage",
+      "tStart": 2429.0,
+      "tEnd": 2408.0,
+      "lat": 36.85,
+      "lon": 10.32,
+      "areaKm2": 203789.77522777536
+    },
+    {
       "id": "achaemenid-empire-383bce",
       "lineage": "persia",
       "member": 0,
       "label": "Achaemenid Empire",
       "tStart": 2408.0,
-      "tEnd": 2362.0,
+      "tEnd": 2391.0,
       "lat": 34.518463134765625,
       "lon": 54.29230571818193,
       "areaKm2": 4313707.350102779
+    },
+    {
+      "id": "carthage-383bce",
+      "lineage": "carthage",
+      "member": 0,
+      "label": "Carthage",
+      "tStart": 2408.0,
+      "tEnd": 2332.0,
+      "lat": 36.85,
+      "lon": 10.32,
+      "areaKm2": 199514.18705010955
     },
     {
       "id": "thirtieth-dynasty-of-egypt-383bce",
@@ -1623,6 +1689,28 @@
       "lat": 28.09024429321289,
       "lon": 29.836783388149932,
       "areaKm2": 687195.6261548295
+    },
+    {
+      "id": "achaemenid-empire-366bce",
+      "lineage": "persia",
+      "member": 0,
+      "label": "Achaemenid Empire",
+      "tStart": 2391.0,
+      "tEnd": 2375.0,
+      "lat": 34.518463134765625,
+      "lon": 54.29230571818193,
+      "areaKm2": 4324237.634382394
+    },
+    {
+      "id": "achaemenid-empire-350bce",
+      "lineage": "persia",
+      "member": 0,
+      "label": "Achaemenid Empire",
+      "tStart": 2375.0,
+      "tEnd": 2362.0,
+      "lat": 34.518463134765625,
+      "lon": 54.292076400114794,
+      "areaKm2": 4326209.47723446
     },
     {
       "id": "macedonian-empire-350bce",
@@ -1685,7 +1773,7 @@
       "member": 0,
       "label": "Roman Republic",
       "tStart": 2362.0,
-      "tEnd": 2348.0,
+      "tEnd": 2351.0,
       "lat": 41.89,
       "lon": 12.49,
       "areaKm2": 9189.972762822867
@@ -1768,26 +1856,37 @@
       "areaKm2": 90260.58921881905
     },
     {
+      "id": "roman-republic-326bce",
+      "lineage": "rome",
+      "member": 0,
+      "label": "Roman Republic",
+      "tStart": 2351.0,
+      "tEnd": 2343.0,
+      "lat": 41.89,
+      "lon": 12.49,
+      "areaKm2": 9949.281443913267
+    },
+    {
       "id": "macedonian-empire-323bce",
       "lineage": "macedon",
       "member": 0,
       "label": "Macedonian Empire",
       "tStart": 2348.0,
-      "tEnd": 2340.0,
+      "tEnd": 2343.0,
       "lat": 32.20383262634277,
       "lon": 59.357279295616635,
       "areaKm2": 4940080.240484179
     },
     {
-      "id": "roman-republic-323bce",
-      "lineage": "rome",
+      "id": "macedonian-empire-318bce",
+      "lineage": "macedon",
       "member": 0,
-      "label": "Roman Republic",
-      "tStart": 2348.0,
-      "tEnd": 2343.0,
-      "lat": 41.89,
-      "lon": 12.49,
-      "areaKm2": 10238.272839019712
+      "label": "Macedonian Empire",
+      "tStart": 2343.0,
+      "tEnd": 2340.0,
+      "lat": 32.20383262634277,
+      "lon": 61.37076486349231,
+      "areaKm2": 4801573.937511422
     },
     {
       "id": "maurya-empire-318bce",
@@ -1854,6 +1953,17 @@
       "lat": 33.9074649810791,
       "lon": 106.4098717385604,
       "areaKm2": 632146.6282532023
+    },
+    {
+      "id": "carthage-307bce",
+      "lineage": "carthage",
+      "member": 0,
+      "label": "Carthage",
+      "tStart": 2332.0,
+      "tEnd": 2302.0,
+      "lat": 36.85,
+      "lon": 10.32,
+      "areaKm2": 219204.74655345347
     },
     {
       "id": "macedonian-empire-307bce",
@@ -1960,7 +2070,7 @@
       "member": 9,
       "label": "Ptolemaic Kingdom",
       "tStart": 2316.0,
-      "tEnd": 2297.0,
+      "tEnd": 2302.0,
       "lat": 31.2,
       "lon": 29.92,
       "areaKm2": 849110.2152991382
@@ -1993,10 +2103,43 @@
       "member": 1,
       "label": "Seleucid Empire",
       "tStart": 2306.0,
-      "tEnd": 2272.0,
+      "tEnd": 2304.0,
       "lat": 33.843156814575195,
       "lon": 53.25686449907841,
       "areaKm2": 2795252.716726136
+    },
+    {
+      "id": "seleucid-empire-279bce",
+      "lineage": "macedon",
+      "member": 1,
+      "label": "Seleucid Empire",
+      "tStart": 2304.0,
+      "tEnd": 2272.0,
+      "lat": 33.393062591552734,
+      "lon": 53.540351386715095,
+      "areaKm2": 2691994.2653963813
+    },
+    {
+      "id": "carthage-277bce",
+      "lineage": "carthage",
+      "member": 0,
+      "label": "Carthage",
+      "tStart": 2302.0,
+      "tEnd": 2300.0,
+      "lat": 36.85,
+      "lon": 10.32,
+      "areaKm2": 197520.24625432907
+    },
+    {
+      "id": "ptolemaic-kingdom-277bce",
+      "lineage": "egypt",
+      "member": 9,
+      "label": "Ptolemaic Kingdom",
+      "tStart": 2302.0,
+      "tEnd": 2297.0,
+      "lat": 31.2,
+      "lon": 29.92,
+      "areaKm2": 846847.6915475816
     },
     {
       "id": "qin-277bce",
@@ -2008,6 +2151,17 @@
       "lat": 33.875314712524414,
       "lon": 106.72457644660304,
       "areaKm2": 714466.7075631822
+    },
+    {
+      "id": "carthage-275bce",
+      "lineage": "carthage",
+      "member": 0,
+      "label": "Carthage",
+      "tStart": 2300.0,
+      "tEnd": 2289.0,
+      "lat": 36.85,
+      "lon": 10.32,
+      "areaKm2": 208431.01952811878
     },
     {
       "id": "roman-republic-275bce",
@@ -2026,7 +2180,7 @@
       "member": 9,
       "label": "Ptolemaic Kingdom",
       "tStart": 2297.0,
-      "tEnd": 2281.0,
+      "tEnd": 2289.0,
       "lat": 31.2,
       "lon": 29.92,
       "areaKm2": 741598.7220466826
@@ -2043,6 +2197,28 @@
       "areaKm2": 92044.03461442134
     },
     {
+      "id": "carthage-264bce",
+      "lineage": "carthage",
+      "member": 0,
+      "label": "Carthage",
+      "tStart": 2289.0,
+      "tEnd": 2281.0,
+      "lat": 36.85,
+      "lon": 10.32,
+      "areaKm2": 217430.45423358862
+    },
+    {
+      "id": "ptolemaic-kingdom-264bce",
+      "lineage": "egypt",
+      "member": 9,
+      "label": "Ptolemaic Kingdom",
+      "tStart": 2289.0,
+      "tEnd": 2281.0,
+      "lat": 31.2,
+      "lon": 29.92,
+      "areaKm2": 754449.3853311009
+    },
+    {
       "id": "roman-republic-264bce",
       "lineage": "rome",
       "member": 0,
@@ -2052,6 +2228,17 @@
       "lat": 41.89,
       "lon": 12.49,
       "areaKm2": 118455.07418260795
+    },
+    {
+      "id": "carthage-256bce",
+      "lineage": "carthage",
+      "member": 0,
+      "label": "Carthage",
+      "tStart": 2281.0,
+      "tEnd": 2272.0,
+      "lat": 36.85,
+      "lon": 10.32,
+      "areaKm2": 210724.72213696025
     },
     {
       "id": "ptolemaic-kingdom-256bce",
@@ -2070,10 +2257,21 @@
       "member": 0,
       "label": "Roman Republic",
       "tStart": 2281.0,
-      "tEnd": 2255.0,
+      "tEnd": 2272.0,
       "lat": 41.89,
       "lon": 12.49,
       "areaKm2": 135971.48109000688
+    },
+    {
+      "id": "carthage-247bce",
+      "lineage": "carthage",
+      "member": 0,
+      "label": "Carthage",
+      "tStart": 2272.0,
+      "tEnd": 2264.0,
+      "lat": 36.85,
+      "lon": 10.32,
+      "areaKm2": 210149.68096569297
     },
     {
       "id": "mayan-city-states-247bce",
@@ -2092,10 +2290,21 @@
       "member": 9,
       "label": "Ptolemaic Kingdom",
       "tStart": 2272.0,
-      "tEnd": 2222.0,
+      "tEnd": 2264.0,
       "lat": 31.2,
       "lon": 29.92,
       "areaKm2": 782993.0066695885
+    },
+    {
+      "id": "roman-republic-247bce",
+      "lineage": "rome",
+      "member": 0,
+      "label": "Roman Republic",
+      "tStart": 2272.0,
+      "tEnd": 2255.0,
+      "lat": 41.89,
+      "lon": 12.49,
+      "areaKm2": 136871.53017098363
     },
     {
       "id": "seleucid-empire-247bce",
@@ -2131,12 +2340,23 @@
       "areaKm2": 253595.88826490223
     },
     {
+      "id": "ptolemaic-kingdom-239bce",
+      "lineage": "egypt",
+      "member": 9,
+      "label": "Ptolemaic Kingdom",
+      "tStart": 2264.0,
+      "tEnd": 2243.0,
+      "lat": 31.2,
+      "lon": 29.92,
+      "areaKm2": 798853.0675314422
+    },
+    {
       "id": "seleucid-empire-239bce",
       "lineage": "macedon",
       "member": 1,
       "label": "Seleucid Empire",
       "tStart": 2264.0,
-      "tEnd": 2235.0,
+      "tEnd": 2250.0,
       "lat": 32.49307632446289,
       "lon": 53.81793044582751,
       "areaKm2": 1870453.1739768314
@@ -2158,7 +2378,7 @@
       "member": 0,
       "label": "Roman Republic",
       "tStart": 2255.0,
-      "tEnd": 2248.0,
+      "tEnd": 2250.0,
       "lat": 41.89,
       "lon": 12.49,
       "areaKm2": 176055.7913062338
@@ -2173,6 +2393,28 @@
       "lat": 25.389997482299805,
       "lon": 83.75323151094739,
       "areaKm2": 1140195.3791244926
+    },
+    {
+      "id": "roman-republic-225bce",
+      "lineage": "rome",
+      "member": 0,
+      "label": "Roman Republic",
+      "tStart": 2250.0,
+      "tEnd": 2248.0,
+      "lat": 41.89,
+      "lon": 12.49,
+      "areaKm2": 167305.55154506463
+    },
+    {
+      "id": "seleucid-empire-225bce",
+      "lineage": "macedon",
+      "member": 1,
+      "label": "Seleucid Empire",
+      "tStart": 2250.0,
+      "tEnd": 2248.0,
+      "lat": 32.49307632446289,
+      "lon": 53.81793044582751,
+      "areaKm2": 2032501.0414980135
     },
     {
       "id": "qin-223bce",
@@ -2191,10 +2433,21 @@
       "member": 0,
       "label": "Roman Republic",
       "tStart": 2248.0,
-      "tEnd": 2241.0,
+      "tEnd": 2243.0,
       "lat": 41.89,
       "lon": 12.49,
       "areaKm2": 210472.97356306546
+    },
+    {
+      "id": "seleucid-empire-223bce",
+      "lineage": "macedon",
+      "member": 1,
+      "label": "Seleucid Empire",
+      "tStart": 2248.0,
+      "tEnd": 2237.0,
+      "lat": 32.49307632446289,
+      "lon": 53.81793044582751,
+      "areaKm2": 1871008.26679047
     },
     {
       "id": "qin-222bce",
@@ -2208,6 +2461,17 @@
       "areaKm2": 1523239.7640159568
     },
     {
+      "id": "ptolemaic-kingdom-218bce",
+      "lineage": "egypt",
+      "member": 9,
+      "label": "Ptolemaic Kingdom",
+      "tStart": 2243.0,
+      "tEnd": 2237.0,
+      "lat": 31.2,
+      "lon": 29.92,
+      "areaKm2": 738967.4365770712
+    },
+    {
       "id": "qin-dynasty-218bce",
       "lineage": "china",
       "member": 3,
@@ -2217,6 +2481,17 @@
       "lat": 35.12967872619629,
       "lon": 112.28218045581572,
       "areaKm2": 1632694.1827338706
+    },
+    {
+      "id": "roman-republic-218bce",
+      "lineage": "rome",
+      "member": 0,
+      "label": "Roman Republic",
+      "tStart": 2243.0,
+      "tEnd": 2241.0,
+      "lat": 41.89,
+      "lon": 12.49,
+      "areaKm2": 219104.12675945836
     },
     {
       "id": "roman-republic-216bce",
@@ -2241,6 +2516,17 @@
       "areaKm2": 170800.84118354044
     },
     {
+      "id": "ptolemaic-kingdom-212bce",
+      "lineage": "egypt",
+      "member": 9,
+      "label": "Ptolemaic Kingdom",
+      "tStart": 2237.0,
+      "tEnd": 2228.0,
+      "lat": 31.2,
+      "lon": 29.92,
+      "areaKm2": 779619.7458549812
+    },
+    {
       "id": "qin-dynasty-212bce",
       "lineage": "china",
       "member": 3,
@@ -2263,6 +2549,17 @@
       "areaKm2": 143980.64198099278
     },
     {
+      "id": "seleucid-empire-212bce",
+      "lineage": "macedon",
+      "member": 1,
+      "label": "Seleucid Empire",
+      "tStart": 2237.0,
+      "tEnd": 2228.0,
+      "lat": 33.20018768310547,
+      "lon": 53.603698561819755,
+      "areaKm2": 2052633.5840161624
+    },
+    {
       "id": "roman-republic-210bce",
       "lineage": "rome",
       "member": 0,
@@ -2272,17 +2569,6 @@
       "lat": 41.89,
       "lon": 12.49,
       "areaKm2": 161978.79859849552
-    },
-    {
-      "id": "seleucid-empire-210bce",
-      "lineage": "macedon",
-      "member": 1,
-      "label": "Seleucid Empire",
-      "tStart": 2235.0,
-      "tEnd": 2213.0,
-      "lat": 33.71455001831055,
-      "lon": 53.304884910583496,
-      "areaKm2": 2277357.1738551524
     },
     {
       "id": "roman-republic-208bce",
@@ -2329,15 +2615,37 @@
       "areaKm2": 302141.4948571462
     },
     {
+      "id": "ptolemaic-kingdom-203bce",
+      "lineage": "egypt",
+      "member": 9,
+      "label": "Ptolemaic Kingdom",
+      "tStart": 2228.0,
+      "tEnd": 2222.0,
+      "lat": 31.2,
+      "lon": 29.92,
+      "areaKm2": 780412.3460334382
+    },
+    {
       "id": "roman-republic-203bce",
       "lineage": "rome",
       "member": 0,
       "label": "Roman Republic",
       "tStart": 2228.0,
-      "tEnd": 2195.0,
+      "tEnd": 2227.0,
       "lat": 41.89,
       "lon": 12.49,
       "areaKm2": 381141.95777513384
+    },
+    {
+      "id": "seleucid-empire-203bce",
+      "lineage": "macedon",
+      "member": 1,
+      "label": "Seleucid Empire",
+      "tStart": 2228.0,
+      "tEnd": 2213.0,
+      "lat": 33.71455001831055,
+      "lon": 53.304884910583496,
+      "areaKm2": 2274384.575560344
     },
     {
       "id": "xiongnu-203bce",
@@ -2371,6 +2679,17 @@
       "lat": 32.91090774536133,
       "lon": 111.57054465016054,
       "areaKm2": 2042614.9464548582
+    },
+    {
+      "id": "roman-republic-202bce",
+      "lineage": "rome",
+      "member": 0,
+      "label": "Roman Republic",
+      "tStart": 2227.0,
+      "tEnd": 2195.0,
+      "lat": 41.89,
+      "lon": 12.49,
+      "areaKm2": 391945.26735923253
     },
     {
       "id": "carthage-197bce",
@@ -2565,7 +2884,7 @@
       "member": 0,
       "label": "Roman Republic",
       "tStart": 2151.0,
-      "tEnd": 2116.0,
+      "tEnd": 2135.0,
       "lat": 41.89,
       "lon": 12.49,
       "areaKm2": 1160796.4776832429
@@ -2609,10 +2928,21 @@
       "member": 9,
       "label": "Ptolemaic Kingdom",
       "tStart": 2135.0,
-      "tEnd": 2056.0,
+      "tEnd": 2061.0,
       "lat": 31.2,
       "lon": 29.92,
       "areaKm2": 565937.5694190675
+    },
+    {
+      "id": "roman-republic-110bce",
+      "lineage": "rome",
+      "member": 0,
+      "label": "Roman Republic",
+      "tStart": 2135.0,
+      "tEnd": 2116.0,
+      "lat": 41.89,
+      "lon": 12.49,
+      "areaKm2": 1186330.5639967024
     },
     {
       "id": "seleucid-empire-110bce",
@@ -2785,21 +3115,43 @@
       "member": 0,
       "label": "Roman Republic",
       "tStart": 2075.0,
-      "tEnd": 2065.0,
+      "tEnd": 2067.0,
       "lat": 41.89,
       "lon": 12.49,
       "areaKm2": 2214404.41181952
     },
     {
-      "id": "roman-republic-40bce",
+      "id": "roman-republic-42bce",
       "lineage": "rome",
       "member": 0,
       "label": "Roman Republic",
-      "tStart": 2065.0,
+      "tStart": 2067.0,
+      "tEnd": 2066.0,
+      "lat": 41.89,
+      "lon": 12.49,
+      "areaKm2": 2339186.7213981794
+    },
+    {
+      "id": "roman-republic-41bce",
+      "lineage": "rome",
+      "member": 0,
+      "label": "Roman Republic",
+      "tStart": 2066.0,
       "tEnd": 2056.0,
       "lat": 41.89,
       "lon": 12.49,
-      "areaKm2": 2210192.348454068
+      "areaKm2": 2339846.2142968765
+    },
+    {
+      "id": "ptolemaic-kingdom-36bce",
+      "lineage": "egypt",
+      "member": 9,
+      "label": "Ptolemaic Kingdom",
+      "tStart": 2061.0,
+      "tEnd": 2056.0,
+      "lat": 31.2,
+      "lon": 29.92,
+      "areaKm2": 554500.0864447906
     },
     {
       "id": "ptolemaic-kingdom-31bce",
@@ -2928,10 +3280,21 @@
       "member": 1,
       "label": "Roman Empire",
       "tStart": 1982.0,
-      "tEnd": 1965.0,
+      "tEnd": 1974.0,
       "lat": 41.89,
       "lon": 12.49,
       "areaKm2": 3886710.600261656
+    },
+    {
+      "id": "roman-empire-51ce",
+      "lineage": "rome",
+      "member": 1,
+      "label": "Roman Empire",
+      "tStart": 1974.0,
+      "tEnd": 1965.0,
+      "lat": 41.89,
+      "lon": 12.49,
+      "areaKm2": 4097364.4577924293
     },
     {
       "id": "roman-empire-60ce",
@@ -2950,7 +3313,7 @@
       "member": 1,
       "label": "Roman Empire",
       "tStart": 1957.0,
-      "tEnd": 1919.0,
+      "tEnd": 1947.0,
       "lat": 41.89,
       "lon": 12.49,
       "areaKm2": 4205806.05623463
@@ -2967,6 +3330,17 @@
       "areaKm2": 2998504.5750497994
     },
     {
+      "id": "roman-empire-78ce",
+      "lineage": "rome",
+      "member": 1,
+      "label": "Roman Empire",
+      "tStart": 1947.0,
+      "tEnd": 1941.0,
+      "lat": 41.89,
+      "lon": 12.49,
+      "areaKm2": 4214652.299075148
+    },
+    {
       "id": "xiongnu-78ce",
       "lineage": "xiongnu",
       "member": 0,
@@ -2978,6 +3352,17 @@
       "areaKm2": 2214755.709981066
     },
     {
+      "id": "roman-empire-84ce",
+      "lineage": "rome",
+      "member": 1,
+      "label": "Roman Empire",
+      "tStart": 1941.0,
+      "tEnd": 1934.0,
+      "lat": 41.89,
+      "lon": 12.49,
+      "areaKm2": 4293560.154965724
+    },
+    {
       "id": "han-dynasty-91ce",
       "lineage": "china",
       "member": 4,
@@ -2987,6 +3372,17 @@
       "lat": 29.79371452331543,
       "lon": 111.4360179901123,
       "areaKm2": 4582951.088439442
+    },
+    {
+      "id": "roman-empire-91ce",
+      "lineage": "rome",
+      "member": 1,
+      "label": "Roman Empire",
+      "tStart": 1934.0,
+      "tEnd": 1919.0,
+      "lat": 41.89,
+      "lon": 12.49,
+      "areaKm2": 4261237.344672483
     },
     {
       "id": "xiongnu-91ce",
@@ -3258,7 +3654,7 @@
       "member": 1,
       "label": "Roman Empire",
       "tStart": 1742.0,
-      "tEnd": 1630.0,
+      "tEnd": 1658.0,
       "lat": 41.89,
       "lon": 12.49,
       "areaKm2": 4214255.474291577
@@ -3396,6 +3792,28 @@
       "areaKm2": 3147167.8748307717
     },
     {
+      "id": "roman-empire-367ce",
+      "lineage": "rome",
+      "member": 1,
+      "label": "Roman Empire",
+      "tStart": 1658.0,
+      "tEnd": 1654.0,
+      "lat": 41.89,
+      "lon": 12.49,
+      "areaKm2": 4061175.938285918
+    },
+    {
+      "id": "roman-empire-371ce",
+      "lineage": "rome",
+      "member": 1,
+      "label": "Roman Empire",
+      "tStart": 1654.0,
+      "tEnd": 1630.0,
+      "lat": 41.89,
+      "lon": 12.49,
+      "areaKm2": 4146940.5239798035
+    },
+    {
       "id": "sasanian-empire-371ce",
       "lineage": "persia",
       "member": 2,
@@ -3522,7 +3940,7 @@
       "member": 3,
       "label": "Eastern Roman Empire",
       "tStart": 1623.0,
-      "tEnd": 1491.0,
+      "tEnd": 1556.0,
       "lat": 41.01,
       "lon": 28.98,
       "areaKm2": 1963623.850005745
@@ -3737,6 +4155,17 @@
       "areaKm2": 1106325.682726398
     },
     {
+      "id": "eastern-roman-empire-469ce",
+      "lineage": "rome",
+      "member": 3,
+      "label": "Eastern Roman Empire",
+      "tStart": 1556.0,
+      "tEnd": 1491.0,
+      "lat": 41.01,
+      "lon": 28.98,
+      "areaKm2": 2001875.2451208236
+    },
+    {
       "id": "western-roman-empire-469ce",
       "lineage": "rome",
       "member": 2,
@@ -3819,7 +4248,7 @@
       "member": 3,
       "label": "Eastern Roman Empire",
       "tStart": 1491.0,
-      "tEnd": 1485.0,
+      "tEnd": 1489.0,
       "lat": 41.01,
       "lon": 28.98,
       "areaKm2": 2186467.791471565
@@ -3858,6 +4287,17 @@
       "areaKm2": 542066.5638276364
     },
     {
+      "id": "eastern-roman-empire-536ce",
+      "lineage": "rome",
+      "member": 3,
+      "label": "Eastern Roman Empire",
+      "tStart": 1489.0,
+      "tEnd": 1485.0,
+      "lat": 41.01,
+      "lon": 28.98,
+      "areaKm2": 2311532.1691994057
+    },
+    {
       "id": "liang-dynasty-536ce",
       "lineage": "china",
       "member": 8,
@@ -3885,10 +4325,21 @@
       "member": 3,
       "label": "Eastern Roman Empire",
       "tStart": 1485.0,
-      "tEnd": 1464.0,
+      "tEnd": 1470.0,
       "lat": 41.01,
       "lon": 28.98,
       "areaKm2": 2326856.5744173722
+    },
+    {
+      "id": "eastern-roman-empire-555ce",
+      "lineage": "rome",
+      "member": 3,
+      "label": "Eastern Roman Empire",
+      "tStart": 1470.0,
+      "tEnd": 1433.0,
+      "lat": 41.01,
+      "lon": 28.98,
+      "areaKm2": 2555293.7736341446
     },
     {
       "id": "chen-dynasty-561ce",
@@ -3900,17 +4351,6 @@
       "lat": 26.193657875061035,
       "lon": 115.74477237432643,
       "areaKm2": 1012383.3841102156
-    },
-    {
-      "id": "eastern-roman-empire-561ce",
-      "lineage": "rome",
-      "member": 3,
-      "label": "Eastern Roman Empire",
-      "tStart": 1464.0,
-      "tEnd": 1433.0,
-      "lat": 41.01,
-      "lon": 28.98,
-      "areaKm2": 2600677.242710421
     },
     {
       "id": "northern-zhou-561ce",
@@ -3962,7 +4402,7 @@
       "member": 3,
       "label": "Eastern Roman Empire",
       "tStart": 1433.0,
-      "tEnd": 1408.0,
+      "tEnd": 1423.0,
       "lat": 41.01,
       "lon": 28.98,
       "areaKm2": 2532264.6943157925
@@ -3977,6 +4417,17 @@
       "lat": 30.950578689575195,
       "lon": 111.47730259435093,
       "areaKm2": 3317895.247677868
+    },
+    {
+      "id": "eastern-roman-empire-602ce",
+      "lineage": "rome",
+      "member": 3,
+      "label": "Eastern Roman Empire",
+      "tStart": 1423.0,
+      "tEnd": 1408.0,
+      "lat": 41.01,
+      "lon": 28.98,
+      "areaKm2": 2524912.406251564
     },
     {
       "id": "kingdom-of-axum-602ce",
@@ -4160,10 +4611,21 @@
       "member": 2,
       "label": "Sasanian Empire",
       "tStart": 1396.0,
-      "tEnd": 1392.0,
+      "tEnd": 1395.0,
       "lat": 29.98,
       "lon": 52.91,
       "areaKm2": 3242750.591543211
+    },
+    {
+      "id": "sasanian-empire-630ce",
+      "lineage": "persia",
+      "member": 2,
+      "label": "Sasanian Empire",
+      "tStart": 1395.0,
+      "tEnd": 1392.0,
+      "lat": 29.98,
+      "lon": 52.91,
+      "areaKm2": 3346330.2040501656
     },
     {
       "id": "tang-dynasty-630ce",
@@ -4490,7 +4952,7 @@
       "member": 1,
       "label": "Umayyad Caliphate",
       "tStart": 1359.0,
-      "tEnd": 1343.0,
+      "tEnd": 1351.0,
       "lat": 33.51,
       "lon": 36.29,
       "areaKm2": 6926277.758584386
@@ -4501,7 +4963,7 @@
       "member": 4,
       "label": "Byzantine Empire",
       "tStart": 1351.0,
-      "tEnd": 1320.0,
+      "tEnd": 1343.0,
       "lat": 41.01,
       "lon": 28.98,
       "areaKm2": 964199.407709829
@@ -4540,6 +5002,28 @@
       "areaKm2": 3217559.7437789757
     },
     {
+      "id": "umayyad-caliphate-674ce",
+      "lineage": "caliphate",
+      "member": 1,
+      "label": "Umayyad Caliphate",
+      "tStart": 1351.0,
+      "tEnd": 1343.0,
+      "lat": 33.51,
+      "lon": 36.29,
+      "areaKm2": 6998993.340786671
+    },
+    {
+      "id": "byzantine-empire-682ce",
+      "lineage": "rome",
+      "member": 4,
+      "label": "Byzantine Empire",
+      "tStart": 1343.0,
+      "tEnd": 1333.0,
+      "lat": 41.01,
+      "lon": 28.98,
+      "areaKm2": 950584.8543554823
+    },
+    {
       "id": "tang-dynasty-682ce",
       "lineage": "china",
       "member": 14,
@@ -4560,6 +5044,17 @@
       "lat": 33.51,
       "lon": 36.29,
       "areaKm2": 5836875.339808584
+    },
+    {
+      "id": "byzantine-empire-692ce",
+      "lineage": "rome",
+      "member": 4,
+      "label": "Byzantine Empire",
+      "tStart": 1333.0,
+      "tEnd": 1320.0,
+      "lat": 41.01,
+      "lon": 28.98,
+      "areaKm2": 943416.1221947618
     },
     {
       "id": "tang-dynasty-692ce",
@@ -4633,7 +5128,7 @@
       "member": 1,
       "label": "Umayyad Caliphate",
       "tStart": 1307.0,
-      "tEnd": 1284.0,
+      "tEnd": 1301.0,
       "lat": 33.51,
       "lon": 36.29,
       "areaKm2": 9838558.993467264
@@ -4644,7 +5139,7 @@
       "member": 4,
       "label": "Byzantine Empire",
       "tStart": 1301.0,
-      "tEnd": 1237.0,
+      "tEnd": 1293.0,
       "lat": 41.01,
       "lon": 28.98,
       "areaKm2": 731977.4308438372
@@ -4661,6 +5156,28 @@
       "areaKm2": 362909.8241254073
     },
     {
+      "id": "umayyad-caliphate-724ce",
+      "lineage": "caliphate",
+      "member": 1,
+      "label": "Umayyad Caliphate",
+      "tStart": 1301.0,
+      "tEnd": 1284.0,
+      "lat": 33.51,
+      "lon": 36.29,
+      "areaKm2": 9846300.64382764
+    },
+    {
+      "id": "byzantine-empire-732ce",
+      "lineage": "rome",
+      "member": 4,
+      "label": "Byzantine Empire",
+      "tStart": 1293.0,
+      "tEnd": 1284.0,
+      "lat": 41.01,
+      "lon": 28.98,
+      "areaKm2": 702109.3807739933
+    },
+    {
       "id": "kingdom-of-the-franks-732ce",
       "lineage": "franks",
       "member": 0,
@@ -4670,6 +5187,17 @@
       "lat": 47.56527137756348,
       "lon": 3.481769542295468,
       "areaKm2": 733247.4307085212
+    },
+    {
+      "id": "byzantine-empire-741ce",
+      "lineage": "rome",
+      "member": 4,
+      "label": "Byzantine Empire",
+      "tStart": 1284.0,
+      "tEnd": 1274.0,
+      "lat": 41.01,
+      "lon": 28.98,
+      "areaKm2": 692856.048566617
     },
     {
       "id": "umayyad-caliphate-741ce",
@@ -4749,6 +5277,17 @@
       "areaKm2": 7548330.713728256
     },
     {
+      "id": "byzantine-empire-751ce",
+      "lineage": "rome",
+      "member": 4,
+      "label": "Byzantine Empire",
+      "tStart": 1274.0,
+      "tEnd": 1257.0,
+      "lat": 41.01,
+      "lon": 28.98,
+      "areaKm2": 692182.1894178166
+    },
+    {
       "id": "carolingian-empire-751ce",
       "lineage": "franks",
       "member": 1,
@@ -4820,7 +5359,7 @@
       "member": 2,
       "label": "Abbasid Caliphate",
       "tStart": 1262.0,
-      "tEnd": 1225.0,
+      "tEnd": 1247.0,
       "lat": 33.31,
       "lon": 44.37,
       "areaKm2": 8085296.875814963
@@ -4835,6 +5374,17 @@
       "lat": 29.6008882522583,
       "lon": 111.53247627452058,
       "areaKm2": 3064687.743788255
+    },
+    {
+      "id": "byzantine-empire-768ce",
+      "lineage": "rome",
+      "member": 4,
+      "label": "Byzantine Empire",
+      "tStart": 1257.0,
+      "tEnd": 1195.0,
+      "lat": 41.01,
+      "lon": 28.98,
+      "areaKm2": 677269.0971783212
     },
     {
       "id": "carolingian-empire-768ce",
@@ -4859,26 +5409,48 @@
       "areaKm2": 980027.1711609252
     },
     {
+      "id": "abbasid-caliphate-778ce",
+      "lineage": "caliphate",
+      "member": 2,
+      "label": "Abbasid Caliphate",
+      "tStart": 1247.0,
+      "tEnd": 1242.0,
+      "lat": 33.31,
+      "lon": 44.37,
+      "areaKm2": 8155148.48136964
+    },
+    {
       "id": "carolingian-empire-778ce",
       "lineage": "franks",
       "member": 1,
       "label": "Carolingian Empire",
       "tStart": 1247.0,
-      "tEnd": 1237.0,
+      "tEnd": 1242.0,
       "lat": 47.76297950744629,
       "lon": 3.6582698107566065,
       "areaKm2": 945004.3355853905
     },
     {
-      "id": "byzantine-empire-788ce",
-      "lineage": "rome",
-      "member": 4,
-      "label": "Byzantine Empire",
-      "tStart": 1237.0,
-      "tEnd": 1165.0,
-      "lat": 41.01,
-      "lon": 28.98,
-      "areaKm2": 701591.041591676
+      "id": "abbasid-caliphate-783ce",
+      "lineage": "caliphate",
+      "member": 2,
+      "label": "Abbasid Caliphate",
+      "tStart": 1242.0,
+      "tEnd": 1225.0,
+      "lat": 33.31,
+      "lon": 44.37,
+      "areaKm2": 8141462.662782549
+    },
+    {
+      "id": "carolingian-empire-783ce",
+      "lineage": "franks",
+      "member": 1,
+      "label": "Carolingian Empire",
+      "tStart": 1242.0,
+      "tEnd": 1237.0,
+      "lat": 47.43354797363281,
+      "lon": 3.5085284255320794,
+      "areaKm2": 942475.9059053132
     },
     {
       "id": "carolingian-empire-788ce",
@@ -4952,7 +5524,7 @@
       "member": 1,
       "label": "Carolingian Empire",
       "tStart": 1219.0,
-      "tEnd": 1165.0,
+      "tEnd": 1175.0,
       "lat": 47.894832611083984,
       "lon": 7.553160730558995,
       "areaKm2": 1317350.3651467327
@@ -4969,6 +5541,39 @@
       "areaKm2": 449974.57093171094
     },
     {
+      "id": "byzantine-empire-830ce",
+      "lineage": "rome",
+      "member": 4,
+      "label": "Byzantine Empire",
+      "tStart": 1195.0,
+      "tEnd": 1185.0,
+      "lat": 41.01,
+      "lon": 28.98,
+      "areaKm2": 689892.6707404534
+    },
+    {
+      "id": "byzantine-empire-840ce",
+      "lineage": "rome",
+      "member": 4,
+      "label": "Byzantine Empire",
+      "tStart": 1185.0,
+      "tEnd": 1159.0,
+      "lat": 41.01,
+      "lon": 28.98,
+      "areaKm2": 657863.3344300434
+    },
+    {
+      "id": "carolingian-empire-850ce",
+      "lineage": "franks",
+      "member": 1,
+      "label": "Carolingian Empire",
+      "tStart": 1175.0,
+      "tEnd": 1165.0,
+      "lat": 47.79593086242676,
+      "lon": 7.503559849751025,
+      "areaKm2": 1246798.278037745
+    },
+    {
       "id": "later-mayan-city-states-850ce",
       "lineage": "maya",
       "member": 1,
@@ -4978,17 +5583,6 @@
       "lat": 19.282658576965332,
       "lon": -89.14946105418005,
       "areaKm2": 177290.59555170324
-    },
-    {
-      "id": "byzantine-empire-860ce",
-      "lineage": "rome",
-      "member": 4,
-      "label": "Byzantine Empire",
-      "tStart": 1165.0,
-      "tEnd": 1089.0,
-      "lat": 41.01,
-      "lon": 28.98,
-      "areaKm2": 626502.0809435243
     },
     {
       "id": "carolingian-empire-860ce",
@@ -5013,6 +5607,28 @@
       "areaKm2": 7435973.425444546
     },
     {
+      "id": "byzantine-empire-866ce",
+      "lineage": "rome",
+      "member": 4,
+      "label": "Byzantine Empire",
+      "tStart": 1159.0,
+      "tEnd": 1155.0,
+      "lat": 41.01,
+      "lon": 28.98,
+      "areaKm2": 625881.2671705035
+    },
+    {
+      "id": "byzantine-empire-870ce",
+      "lineage": "rome",
+      "member": 4,
+      "label": "Byzantine Empire",
+      "tStart": 1155.0,
+      "tEnd": 1150.0,
+      "lat": 41.01,
+      "lon": 28.98,
+      "areaKm2": 624977.3079929035
+    },
+    {
       "id": "carolingian-empire-870ce",
       "lineage": "franks",
       "member": 1,
@@ -5035,6 +5651,17 @@
       "areaKm2": 5122574.226154861
     },
     {
+      "id": "byzantine-empire-875ce",
+      "lineage": "rome",
+      "member": 4,
+      "label": "Byzantine Empire",
+      "tStart": 1150.0,
+      "tEnd": 1147.0,
+      "lat": 41.01,
+      "lon": 28.98,
+      "areaKm2": 635885.8496445244
+    },
+    {
       "id": "khmer-empire-875ce",
       "lineage": "khmer",
       "member": 0,
@@ -5055,6 +5682,28 @@
       "lat": 33.31,
       "lon": 44.37,
       "areaKm2": 4853543.22049356
+    },
+    {
+      "id": "byzantine-empire-878ce",
+      "lineage": "rome",
+      "member": 4,
+      "label": "Byzantine Empire",
+      "tStart": 1147.0,
+      "tEnd": 1145.0,
+      "lat": 41.01,
+      "lon": 28.98,
+      "areaKm2": 635561.7299926179
+    },
+    {
+      "id": "byzantine-empire-880ce",
+      "lineage": "rome",
+      "member": 4,
+      "label": "Byzantine Empire",
+      "tStart": 1145.0,
+      "tEnd": 1139.0,
+      "lat": 41.01,
+      "lon": 28.98,
+      "areaKm2": 647158.5352227399
     },
     {
       "id": "tang-dynasty-880ce",
@@ -5095,10 +5744,21 @@
       "member": 2,
       "label": "Abbasid Caliphate",
       "tStart": 1139.0,
-      "tEnd": 1127.0,
+      "tEnd": 1137.0,
       "lat": 33.31,
       "lon": 44.37,
       "areaKm2": 3856677.885385371
+    },
+    {
+      "id": "byzantine-empire-886ce",
+      "lineage": "rome",
+      "member": 4,
+      "label": "Byzantine Empire",
+      "tStart": 1139.0,
+      "tEnd": 1089.0,
+      "lat": 41.01,
+      "lon": 28.98,
+      "areaKm2": 635695.3999578147
     },
     {
       "id": "carolingian-empire-887ce",
@@ -5110,6 +5770,17 @@
       "lat": 48.224761962890625,
       "lon": 7.30790563605543,
       "areaKm2": 978061.2421589337
+    },
+    {
+      "id": "abbasid-caliphate-888ce",
+      "lineage": "caliphate",
+      "member": 2,
+      "label": "Abbasid Caliphate",
+      "tStart": 1137.0,
+      "tEnd": 1127.0,
+      "lat": 33.31,
+      "lon": 44.37,
+      "areaKm2": 3800295.7378013744
     },
     {
       "id": "abbasid-caliphate-898ce",
@@ -5194,7 +5865,7 @@
       "member": 4,
       "label": "Byzantine Empire",
       "tStart": 1089.0,
-      "tEnd": 1055.0,
+      "tEnd": 1065.0,
       "lat": 41.01,
       "lon": 28.98,
       "areaKm2": 719229.862527553
@@ -5233,6 +5904,17 @@
       "areaKm2": 790319.1813186044
     },
     {
+      "id": "byzantine-empire-960ce",
+      "lineage": "rome",
+      "member": 4,
+      "label": "Byzantine Empire",
+      "tStart": 1065.0,
+      "tEnd": 1064.0,
+      "lat": 41.01,
+      "lon": 28.98,
+      "areaKm2": 741338.8439428989
+    },
+    {
       "id": "later-mayan-city-states-960ce",
       "lineage": "maya",
       "member": 1,
@@ -5242,6 +5924,17 @@
       "lat": 19.507661819458008,
       "lon": -89.07597957030538,
       "areaKm2": 135191.35162742797
+    },
+    {
+      "id": "byzantine-empire-961ce",
+      "lineage": "rome",
+      "member": 4,
+      "label": "Byzantine Empire",
+      "tStart": 1064.0,
+      "tEnd": 1055.0,
+      "lat": 41.01,
+      "lon": 28.98,
+      "areaKm2": 747027.3556900134
     },
     {
       "id": "northern-song-961ce",
@@ -5260,7 +5953,7 @@
       "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 1063.0,
-      "tEnd": 1022.0,
+      "tEnd": 1055.0,
       "lat": 48.158761978149414,
       "lon": 11.217144689739655,
       "areaKm2": 736944.0170012008
@@ -5275,6 +5968,17 @@
       "lat": 41.01,
       "lon": 28.98,
       "areaKm2": 891566.975723016
+    },
+    {
+      "id": "holy-roman-empire-970ce",
+      "lineage": "hre",
+      "member": 0,
+      "label": "Holy Roman Empire",
+      "tStart": 1055.0,
+      "tEnd": 1022.0,
+      "lat": 48.389875411987305,
+      "lon": 11.074352017402337,
+      "areaKm2": 724681.5010629366
     },
     {
       "id": "northern-song-970ce",
@@ -5293,7 +5997,7 @@
       "member": 4,
       "label": "Byzantine Empire",
       "tStart": 1045.0,
-      "tEnd": 1025.0,
+      "tEnd": 1035.0,
       "lat": 41.01,
       "lon": 28.98,
       "areaKm2": 898341.0625893925
@@ -5308,6 +6012,17 @@
       "lat": 29.6008882522583,
       "lon": 111.53247627452058,
       "areaKm2": 2765818.5090598264
+    },
+    {
+      "id": "byzantine-empire-990ce",
+      "lineage": "rome",
+      "member": 4,
+      "label": "Byzantine Empire",
+      "tStart": 1035.0,
+      "tEnd": 1025.0,
+      "lat": 41.01,
+      "lon": 28.98,
+      "areaKm2": 833526.2848242227
     },
     {
       "id": "seljuk-dynasty-990ce",
@@ -5403,7 +6118,7 @@
       "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 991.0,
-      "tEnd": 823.0,
+      "tEnd": 931.0,
       "lat": 48.02676010131836,
       "lon": 11.204761163888179,
       "areaKm2": 894137.6833416845
@@ -5491,7 +6206,7 @@
       "member": 4,
       "label": "Byzantine Empire",
       "tStart": 940.0,
-      "tEnd": 926.0,
+      "tEnd": 931.0,
       "lat": 41.01,
       "lon": 28.98,
       "areaKm2": 512169.3497280473
@@ -5508,6 +6223,17 @@
       "areaKm2": 4142464.5133653465
     },
     {
+      "id": "byzantine-empire-1094ce",
+      "lineage": "rome",
+      "member": 4,
+      "label": "Byzantine Empire",
+      "tStart": 931.0,
+      "tEnd": 926.0,
+      "lat": 41.01,
+      "lon": 28.98,
+      "areaKm2": 508084.97664448956
+    },
+    {
       "id": "great-seljuk-empire-1094ce",
       "lineage": "seljuk",
       "member": 1,
@@ -5517,6 +6243,17 @@
       "lat": 35.25835990905762,
       "lon": 51.610008077680384,
       "areaKm2": 3107459.8656281945
+    },
+    {
+      "id": "holy-roman-empire-1094ce",
+      "lineage": "hre",
+      "member": 0,
+      "label": "Holy Roman Empire",
+      "tStart": 931.0,
+      "tEnd": 886.0,
+      "lat": 48.02676010131836,
+      "lon": 11.204761163888179,
+      "areaKm2": 883217.6678334964
     },
     {
       "id": "byzantine-empire-1099ce",
@@ -5552,6 +6289,17 @@
       "areaKm2": 2536164.4927546866
     },
     {
+      "id": "holy-roman-empire-1139ce",
+      "lineage": "hre",
+      "member": 0,
+      "label": "Holy Roman Empire",
+      "tStart": 886.0,
+      "tEnd": 878.0,
+      "lat": 48.02676010131836,
+      "lon": 11.204761163888179,
+      "areaKm2": 890995.2314001716
+    },
+    {
       "id": "southern-song-1139ce",
       "lineage": "china",
       "member": 20,
@@ -5574,12 +6322,23 @@
       "areaKm2": 2478490.425064378
     },
     {
+      "id": "holy-roman-empire-1147ce",
+      "lineage": "hre",
+      "member": 0,
+      "label": "Holy Roman Empire",
+      "tStart": 878.0,
+      "tEnd": 823.0,
+      "lat": 48.389875411987305,
+      "lon": 11.074352017402337,
+      "areaKm2": 873546.1703263513
+    },
+    {
       "id": "great-seljuk-empire-1152ce",
       "lineage": "seljuk",
       "member": 1,
       "label": "Great Seljuk Empire",
       "tStart": 873.0,
-      "tEnd": 848.0,
+      "tEnd": 856.0,
       "lat": 33.778852462768555,
       "lon": 53.03041858897447,
       "areaKm2": 1872932.746849244
@@ -5594,6 +6353,17 @@
       "lat": 41.01,
       "lon": 28.98,
       "areaKm2": 726806.9723758246
+    },
+    {
+      "id": "great-seljuk-empire-1169ce",
+      "lineage": "seljuk",
+      "member": 1,
+      "label": "Great Seljuk Empire",
+      "tStart": 856.0,
+      "tEnd": 848.0,
+      "lat": 33.778852462768555,
+      "lon": 53.03041858897447,
+      "areaKm2": 1850476.0034513648
     },
     {
       "id": "great-seljuk-empire-1177ce",
@@ -5832,7 +6602,7 @@
       "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 765.0,
-      "tEnd": 720.0,
+      "tEnd": 731.0,
       "lat": 48.48897933959961,
       "lon": 10.960454994162854,
       "areaKm2": 991457.1561466812
@@ -5865,7 +6635,7 @@
       "member": 4,
       "label": "Byzantine Empire",
       "tStart": 746.0,
-      "tEnd": 731.0,
+      "tEnd": 740.0,
       "lat": 41.01,
       "lon": 28.98,
       "areaKm2": 255370.80022674854
@@ -5882,15 +6652,15 @@
       "areaKm2": 27426675.267719273
     },
     {
-      "id": "byzantine-empire-1294ce",
+      "id": "byzantine-empire-1285ce",
       "lineage": "rome",
       "member": 4,
       "label": "Byzantine Empire",
-      "tStart": 731.0,
+      "tStart": 740.0,
       "tEnd": 720.0,
       "lat": 41.01,
       "lon": 28.98,
-      "areaKm2": 251526.33777949895
+      "areaKm2": 239137.10594397082
     },
     {
       "id": "chagatai-khanate-1294ce",
@@ -5913,6 +6683,17 @@
       "lat": 47.664106369018555,
       "lon": 55.0919809322969,
       "areaKm2": 4857721.481766178
+    },
+    {
+      "id": "holy-roman-empire-1294ce",
+      "lineage": "hre",
+      "member": 0,
+      "label": "Holy Roman Empire",
+      "tStart": 731.0,
+      "tEnd": 720.0,
+      "lat": 48.62119674682617,
+      "lon": 10.891392281707022,
+      "areaKm2": 1000865.8564624215
     },
     {
       "id": "ilkhanate-1294ce",
@@ -6074,7 +6855,7 @@
       "member": 4,
       "label": "Byzantine Empire",
       "tStart": 673.0,
-      "tEnd": 650.0,
+      "tEnd": 662.0,
       "lat": 41.01,
       "lon": 28.98,
       "areaKm2": 76370.68502540939
@@ -6089,6 +6870,17 @@
       "lat": 41.65178298950195,
       "lon": 79.09359006059883,
       "areaKm2": 1656024.4055864403
+    },
+    {
+      "id": "byzantine-empire-1363ce",
+      "lineage": "rome",
+      "member": 4,
+      "label": "Byzantine Empire",
+      "tStart": 662.0,
+      "tEnd": 650.0,
+      "lat": 41.01,
+      "lon": 28.98,
+      "areaKm2": 70049.22097363636
     },
     {
       "id": "chagatai-khanate-1363ce",
@@ -6283,7 +7075,7 @@
       "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 623.0,
-      "tEnd": 603.0,
+      "tEnd": 610.0,
       "lat": 50.013240814208984,
       "lon": 12.881468475471053,
       "areaKm2": 1072776.3677844817
@@ -6338,7 +7130,7 @@
       "member": 0,
       "label": "Ottoman Empire",
       "tStart": 618.0,
-      "tEnd": 603.0,
+      "tEnd": 610.0,
       "lat": 40.19,
       "lon": 29.06,
       "areaKm2": 422720.7507594656
@@ -6355,12 +7147,23 @@
       "areaKm2": 4710094.132047783
     },
     {
+      "id": "holy-roman-empire-1415ce",
+      "lineage": "hre",
+      "member": 0,
+      "label": "Holy Roman Empire",
+      "tStart": 610.0,
+      "tEnd": 603.0,
+      "lat": 49.15062713623047,
+      "lon": 11.518718374185196,
+      "areaKm2": 1025226.0407076286
+    },
+    {
       "id": "kingdom-of-portugal-1415ce",
       "lineage": "portugal",
       "member": 0,
       "label": "Portugal",
       "tStart": 610.0,
-      "tEnd": 557.0,
+      "tEnd": 603.0,
       "lat": 38.72,
       "lon": -9.14,
       "areaKm2": 91935.9434290014
@@ -6386,6 +7189,17 @@
       "lat": 34.58278846740723,
       "lon": 108.79319792162389,
       "areaKm2": 6266989.997569672
+    },
+    {
+      "id": "ottoman-empire-1415ce",
+      "lineage": "ottoman",
+      "member": 0,
+      "label": "Ottoman Empire",
+      "tStart": 610.0,
+      "tEnd": 596.0,
+      "lat": 40.19,
+      "lon": 29.06,
+      "areaKm2": 440111.866778674
     },
     {
       "id": "timurid-empire-1415ce",
@@ -6415,21 +7229,21 @@
       "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 603.0,
-      "tEnd": 575.0,
+      "tEnd": 596.0,
       "lat": 49.15062713623047,
       "lon": 11.518718374185196,
       "areaKm2": 943975.8805463384
     },
     {
-      "id": "ottoman-empire-1422ce",
-      "lineage": "ottoman",
+      "id": "kingdom-of-portugal-1422ce",
+      "lineage": "portugal",
       "member": 0,
-      "label": "Ottoman Empire",
+      "label": "Portugal",
       "tStart": 603.0,
-      "tEnd": 596.0,
-      "lat": 40.19,
-      "lon": 29.06,
-      "areaKm2": 457342.08559594676
+      "tEnd": 585.0,
+      "lat": 38.72,
+      "lon": -9.14,
+      "areaKm2": 92856.21508777562
     },
     {
       "id": "aztec-triple-alliance-1429ce",
@@ -6443,12 +7257,23 @@
       "areaKm2": 5759.282849880984
     },
     {
+      "id": "holy-roman-empire-1429ce",
+      "lineage": "hre",
+      "member": 0,
+      "label": "Holy Roman Empire",
+      "tStart": 596.0,
+      "tEnd": 575.0,
+      "lat": 49.15062713623047,
+      "lon": 11.518718374185196,
+      "areaKm2": 933148.9175653425
+    },
+    {
       "id": "ottoman-empire-1429ce",
       "lineage": "ottoman",
       "member": 0,
       "label": "Ottoman Empire",
       "tStart": 596.0,
-      "tEnd": 566.0,
+      "tEnd": 575.0,
       "lat": 40.19,
       "lon": 29.06,
       "areaKm2": 550316.1666332174
@@ -6485,6 +7310,17 @@
       "lat": -13.53,
       "lon": -71.97,
       "areaKm2": 8783.28179087285
+    },
+    {
+      "id": "kingdom-of-portugal-1440ce",
+      "lineage": "portugal",
+      "member": 0,
+      "label": "Portugal",
+      "tStart": 585.0,
+      "tEnd": 575.0,
+      "lat": 38.72,
+      "lon": -9.14,
+      "areaKm2": 93762.86178799308
     },
     {
       "id": "ming-dynasty-1440ce",
@@ -6542,6 +7378,17 @@
       "areaKm2": 155367.62605453003
     },
     {
+      "id": "kingdom-of-portugal-1450ce",
+      "lineage": "portugal",
+      "member": 0,
+      "label": "Portugal",
+      "tStart": 575.0,
+      "tEnd": 562.0,
+      "lat": 38.72,
+      "lon": -9.14,
+      "areaKm2": 96610.74249491177
+    },
+    {
       "id": "ming-dynasty-1450ce",
       "lineage": "china",
       "member": 21,
@@ -6551,6 +7398,17 @@
       "lat": 33.36091995239258,
       "lon": 111.29177470223712,
       "areaKm2": 4960490.459533011
+    },
+    {
+      "id": "ottoman-empire-1450ce",
+      "lineage": "ottoman",
+      "member": 0,
+      "label": "Ottoman Empire",
+      "tStart": 575.0,
+      "tEnd": 566.0,
+      "lat": 40.19,
+      "lon": 29.06,
+      "areaKm2": 569416.9060508376
     },
     {
       "id": "aztec-triple-alliance-1453ce",
@@ -6591,7 +7449,7 @@
       "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 566.0,
-      "tEnd": 496.0,
+      "tEnd": 543.0,
       "lat": 50.545555114746094,
       "lon": 8.478225392915267,
       "areaKm2": 349202.49847787956
@@ -6617,6 +7475,17 @@
       "lat": 35.00096893310547,
       "lon": 54.66266024417344,
       "areaKm2": 1579083.1426337862
+    },
+    {
+      "id": "kingdom-of-portugal-1463ce",
+      "lineage": "portugal",
+      "member": 0,
+      "label": "Portugal",
+      "tStart": 562.0,
+      "tEnd": 557.0,
+      "lat": 38.72,
+      "lon": -9.14,
+      "areaKm2": 98128.64122915639
     },
     {
       "id": "ottoman-empire-1463ce",
@@ -6668,7 +7537,7 @@
       "member": 0,
       "label": "Portugal",
       "tStart": 557.0,
-      "tEnd": 509.0,
+      "tEnd": 550.0,
       "lat": 38.72,
       "lon": -9.14,
       "areaKm2": 102747.86193812297
@@ -6690,7 +7559,7 @@
       "member": 0,
       "label": "Ottoman Empire",
       "tStart": 557.0,
-      "tEnd": 509.0,
+      "tEnd": 550.0,
       "lat": 40.19,
       "lon": 29.06,
       "areaKm2": 896520.2232176105
@@ -6729,6 +7598,28 @@
       "areaKm2": 434544.5430678505
     },
     {
+      "id": "kingdom-of-portugal-1475ce",
+      "lineage": "portugal",
+      "member": 0,
+      "label": "Portugal",
+      "tStart": 550.0,
+      "tEnd": 543.0,
+      "lat": 38.72,
+      "lon": -9.14,
+      "areaKm2": 104625.45894231924
+    },
+    {
+      "id": "ottoman-empire-1475ce",
+      "lineage": "ottoman",
+      "member": 0,
+      "label": "Ottoman Empire",
+      "tStart": 550.0,
+      "tEnd": 543.0,
+      "lat": 40.19,
+      "lon": 29.06,
+      "areaKm2": 905226.4394462531
+    },
+    {
       "id": "songhai-empire-1475ce",
       "lineage": "sahel",
       "member": 2,
@@ -6745,7 +7636,7 @@
       "member": 0,
       "label": "Timurid Empire",
       "tStart": 550.0,
-      "tEnd": 518.0,
+      "tEnd": 528.0,
       "lat": 34.357656478881836,
       "lon": 62.27601804163743,
       "areaKm2": 1882982.6298301711
@@ -6756,10 +7647,21 @@
       "member": 0,
       "label": "Aztec Empire",
       "tStart": 543.0,
-      "tEnd": 528.0,
+      "tEnd": 533.0,
       "lat": 19.43,
       "lon": -99.13,
       "areaKm2": 147186.79922865191
+    },
+    {
+      "id": "holy-roman-empire-1482ce",
+      "lineage": "hre",
+      "member": 0,
+      "label": "Holy Roman Empire",
+      "tStart": 543.0,
+      "tEnd": 523.0,
+      "lat": 50.6121768951416,
+      "lon": 8.505347664971499,
+      "areaKm2": 341822.8414565003
     },
     {
       "id": "inca-empire-1482ce",
@@ -6771,6 +7673,72 @@
       "lat": -13.53,
       "lon": -71.97,
       "areaKm2": 537148.758720102
+    },
+    {
+      "id": "kingdom-of-portugal-1482ce",
+      "lineage": "portugal",
+      "member": 0,
+      "label": "Portugal",
+      "tStart": 543.0,
+      "tEnd": 538.0,
+      "lat": 38.72,
+      "lon": -9.14,
+      "areaKm2": 105630.73589671004
+    },
+    {
+      "id": "ottoman-empire-1482ce",
+      "lineage": "ottoman",
+      "member": 0,
+      "label": "Ottoman Empire",
+      "tStart": 543.0,
+      "tEnd": 538.0,
+      "lat": 40.19,
+      "lon": 29.06,
+      "areaKm2": 914163.4788969366
+    },
+    {
+      "id": "kingdom-of-portugal-1487ce",
+      "lineage": "portugal",
+      "member": 0,
+      "label": "Portugal",
+      "tStart": 538.0,
+      "tEnd": 533.0,
+      "lat": 38.72,
+      "lon": -9.14,
+      "areaKm2": 106348.89432015739
+    },
+    {
+      "id": "ottoman-empire-1487ce",
+      "lineage": "ottoman",
+      "member": 0,
+      "label": "Ottoman Empire",
+      "tStart": 538.0,
+      "tEnd": 523.0,
+      "lat": 40.19,
+      "lon": 29.06,
+      "areaKm2": 930828.2340917815
+    },
+    {
+      "id": "aztec-triple-alliance-1492ce",
+      "lineage": "aztec",
+      "member": 0,
+      "label": "Aztec Empire",
+      "tStart": 533.0,
+      "tEnd": 528.0,
+      "lat": 19.43,
+      "lon": -99.13,
+      "areaKm2": 153082.42597286365
+    },
+    {
+      "id": "kingdom-of-portugal-1492ce",
+      "lineage": "portugal",
+      "member": 0,
+      "label": "Portugal",
+      "tStart": 533.0,
+      "tEnd": 528.0,
+      "lat": 38.72,
+      "lon": -9.14,
+      "areaKm2": 109013.14707152118
     },
     {
       "id": "aztec-triple-alliance-1497ce",
@@ -6795,6 +7763,28 @@
       "areaKm2": 2095031.9905848624
     },
     {
+      "id": "kingdom-of-portugal-1497ce",
+      "lineage": "portugal",
+      "member": 0,
+      "label": "Portugal",
+      "tStart": 528.0,
+      "tEnd": 518.0,
+      "lat": 38.72,
+      "lon": -9.14,
+      "areaKm2": 113432.51704304968
+    },
+    {
+      "id": "timurid-empire-1497ce",
+      "lineage": "timurid",
+      "member": 0,
+      "label": "Timurid Empire",
+      "tStart": 528.0,
+      "tEnd": 518.0,
+      "lat": 34.357656478881836,
+      "lon": 62.27601804163743,
+      "areaKm2": 1862502.6445131775
+    },
+    {
       "id": "aztec-triple-alliance-1502ce",
       "lineage": "aztec",
       "member": 0,
@@ -6804,6 +7794,28 @@
       "lat": 19.43,
       "lon": -99.13,
       "areaKm2": 211464.85571990494
+    },
+    {
+      "id": "holy-roman-empire-1502ce",
+      "lineage": "hre",
+      "member": 0,
+      "label": "Holy Roman Empire",
+      "tStart": 523.0,
+      "tEnd": 513.0,
+      "lat": 50.97893524169922,
+      "lon": 7.930174931745398,
+      "areaKm2": 336179.1403702995
+    },
+    {
+      "id": "ottoman-empire-1502ce",
+      "lineage": "ottoman",
+      "member": 0,
+      "label": "Ottoman Empire",
+      "tStart": 523.0,
+      "tEnd": 518.0,
+      "lat": 40.19,
+      "lon": 29.06,
+      "areaKm2": 930142.5162840268
     },
     {
       "id": "portuguese-empire-1502ce",
@@ -6826,6 +7838,28 @@
       "lat": 38.803449630737305,
       "lon": 46.548215437031544,
       "areaKm2": 159055.70566122042
+    },
+    {
+      "id": "kingdom-of-portugal-1507ce",
+      "lineage": "portugal",
+      "member": 0,
+      "label": "Portugal",
+      "tStart": 518.0,
+      "tEnd": 509.0,
+      "lat": 38.72,
+      "lon": -9.14,
+      "areaKm2": 100981.71316331923
+    },
+    {
+      "id": "ottoman-empire-1507ce",
+      "lineage": "ottoman",
+      "member": 0,
+      "label": "Ottoman Empire",
+      "tStart": 518.0,
+      "tEnd": 509.0,
+      "lat": 40.19,
+      "lon": 29.06,
+      "areaKm2": 931467.4811725036
     },
     {
       "id": "portuguese-africa-1507ce",
@@ -6872,12 +7906,23 @@
       "areaKm2": 1390021.1994904398
     },
     {
+      "id": "holy-roman-empire-1512ce",
+      "lineage": "hre",
+      "member": 0,
+      "label": "Holy Roman Empire",
+      "tStart": 513.0,
+      "tEnd": 496.0,
+      "lat": 50.97893524169922,
+      "lon": 7.930174931745398,
+      "areaKm2": 333764.1055709381
+    },
+    {
       "id": "portuguese-empire-1512ce",
       "lineage": "portugal",
       "member": 1,
       "label": "Portuguese Empire",
       "tStart": 513.0,
-      "tEnd": 496.0,
+      "tEnd": 509.0,
       "lat": -12.97,
       "lon": -38.51,
       "areaKm2": 129551.6518384736
@@ -6938,6 +7983,17 @@
       "areaKm2": 1062423.4674678699
     },
     {
+      "id": "portuguese-empire-1516ce",
+      "lineage": "portugal",
+      "member": 1,
+      "label": "Portuguese Empire",
+      "tStart": 509.0,
+      "tEnd": 504.0,
+      "lat": -12.97,
+      "lon": -38.51,
+      "areaKm2": 133283.04353904165
+    },
+    {
       "id": "spanish-empire-1516ce",
       "lineage": "spain",
       "member": 1,
@@ -6965,7 +8021,7 @@
       "member": 0,
       "label": "Ottoman Empire",
       "tStart": 506.0,
-      "tEnd": 491.0,
+      "tEnd": 499.0,
       "lat": 40.19,
       "lon": 29.06,
       "areaKm2": 2689050.898335989
@@ -6998,10 +8054,21 @@
       "member": 0,
       "label": "Spain",
       "tStart": 504.0,
-      "tEnd": 496.0,
+      "tEnd": 499.0,
       "lat": 40.42,
       "lon": -3.7,
       "areaKm2": 664951.0025364311
+    },
+    {
+      "id": "portuguese-empire-1521ce",
+      "lineage": "portugal",
+      "member": 1,
+      "label": "Portuguese Empire",
+      "tStart": 504.0,
+      "tEnd": 499.0,
+      "lat": -12.97,
+      "lon": -38.51,
+      "areaKm2": 141898.76093693348
     },
     {
       "id": "spanish-empire-1521ce",
@@ -7015,6 +8082,17 @@
       "areaKm2": 486588.68756179506
     },
     {
+      "id": "kingdom-of-spain-1526ce",
+      "lineage": "spain",
+      "member": 0,
+      "label": "Spain",
+      "tStart": 499.0,
+      "tEnd": 496.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 676829.6727842621
+    },
+    {
       "id": "mughal-empire-1526ce",
       "lineage": "timurid",
       "member": 1,
@@ -7024,6 +8102,28 @@
       "lat": 33.13590049743652,
       "lon": 69.22850942563949,
       "areaKm2": 606125.1313009571
+    },
+    {
+      "id": "ottoman-empire-1526ce",
+      "lineage": "ottoman",
+      "member": 0,
+      "label": "Ottoman Empire",
+      "tStart": 499.0,
+      "tEnd": 491.0,
+      "lat": 40.19,
+      "lon": 29.06,
+      "areaKm2": 2792917.9681346063
+    },
+    {
+      "id": "portuguese-empire-1526ce",
+      "lineage": "portugal",
+      "member": 1,
+      "label": "Portuguese Empire",
+      "tStart": 499.0,
+      "tEnd": 496.0,
+      "lat": -12.97,
+      "lon": -38.51,
+      "areaKm2": 143328.92503357166
     },
     {
       "id": "safavid-dynasty-1526ce",
@@ -7053,7 +8153,7 @@
       "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 496.0,
-      "tEnd": 473.0,
+      "tEnd": 485.0,
       "lat": 51.079050064086914,
       "lon": 7.981634645754036,
       "areaKm2": 315822.6357554013
@@ -7086,7 +8186,7 @@
       "member": 1,
       "label": "Portuguese Empire",
       "tStart": 496.0,
-      "tEnd": 485.0,
+      "tEnd": 491.0,
       "lat": -12.97,
       "lon": -38.51,
       "areaKm2": 116907.55233545069
@@ -7130,7 +8230,7 @@
       "member": 0,
       "label": "Ottoman Empire",
       "tStart": 491.0,
-      "tEnd": 473.0,
+      "tEnd": 485.0,
       "lat": 40.19,
       "lon": 29.06,
       "areaKm2": 3176947.8268498685
@@ -7145,6 +8245,17 @@
       "lat": -15.03,
       "lon": 40.73,
       "areaKm2": 33195.48091717397
+    },
+    {
+      "id": "portuguese-empire-1534ce",
+      "lineage": "portugal",
+      "member": 1,
+      "label": "Portuguese Empire",
+      "tStart": 491.0,
+      "tEnd": 485.0,
+      "lat": -12.97,
+      "lon": -38.51,
+      "areaKm2": 115465.76837945919
     },
     {
       "id": "safavid-dynasty-1534ce",
@@ -7167,6 +8278,17 @@
       "lat": 40.42,
       "lon": -3.7,
       "areaKm2": 1470056.6522892136
+    },
+    {
+      "id": "holy-roman-empire-1540ce",
+      "lineage": "hre",
+      "member": 0,
+      "label": "Holy Roman Empire",
+      "tStart": 485.0,
+      "tEnd": 478.0,
+      "lat": 51.079050064086914,
+      "lon": 7.981634645754036,
+      "areaKm2": 301974.4671935648
     },
     {
       "id": "inca-empire-1540ce",
@@ -7202,6 +8324,17 @@
       "areaKm2": 344712.5999243542
     },
     {
+      "id": "ottoman-empire-1540ce",
+      "lineage": "ottoman",
+      "member": 0,
+      "label": "Ottoman Empire",
+      "tStart": 485.0,
+      "tEnd": 473.0,
+      "lat": 40.19,
+      "lon": 29.06,
+      "areaKm2": 3194561.2003085967
+    },
+    {
       "id": "portuguese-empire-1540ce",
       "lineage": "portugal",
       "member": 1,
@@ -7218,10 +8351,21 @@
       "member": 1,
       "label": "Spanish Empire",
       "tStart": 485.0,
-      "tEnd": 473.0,
+      "tEnd": 478.0,
       "lat": 40.42,
       "lon": -3.7,
       "areaKm2": 3968178.601236041
+    },
+    {
+      "id": "holy-roman-empire-1547ce",
+      "lineage": "hre",
+      "member": 0,
+      "label": "Holy Roman Empire",
+      "tStart": 478.0,
+      "tEnd": 473.0,
+      "lat": 51.079050064086914,
+      "lon": 7.981634645754036,
+      "areaKm2": 304829.52770108037
     },
     {
       "id": "mughal-empire-1547ce",
@@ -7240,10 +8384,21 @@
       "member": 3,
       "label": "Portuguese Africa",
       "tStart": 478.0,
-      "tEnd": 446.0,
+      "tEnd": 461.0,
       "lat": -15.03,
       "lon": 40.73,
       "areaKm2": 29002.56799227186
+    },
+    {
+      "id": "spanish-empire-1547ce",
+      "lineage": "spain",
+      "member": 1,
+      "label": "Spanish Empire",
+      "tStart": 478.0,
+      "tEnd": 473.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 4104749.493237472
     },
     {
       "id": "tsardom-of-russia-1547ce",
@@ -7262,7 +8417,7 @@
       "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 473.0,
-      "tEnd": 461.0,
+      "tEnd": 469.0,
       "lat": 51.079050064086914,
       "lon": 7.981634645754036,
       "areaKm2": 293128.39229068696
@@ -7273,7 +8428,7 @@
       "member": 0,
       "label": "Ottoman Empire",
       "tStart": 473.0,
-      "tEnd": 461.0,
+      "tEnd": 469.0,
       "lat": 40.19,
       "lon": 29.06,
       "areaKm2": 3482235.225604025
@@ -7284,7 +8439,7 @@
       "member": 1,
       "label": "Portuguese Empire",
       "tStart": 473.0,
-      "tEnd": 453.0,
+      "tEnd": 469.0,
       "lat": -12.97,
       "lon": -38.51,
       "areaKm2": 260670.17940656608
@@ -7295,7 +8450,7 @@
       "member": 1,
       "label": "Spanish Empire",
       "tStart": 473.0,
-      "tEnd": 446.0,
+      "tEnd": 461.0,
       "lat": 40.42,
       "lon": -3.7,
       "areaKm2": 4220291.524454561
@@ -7310,6 +8465,17 @@
       "lat": 60.452083587646484,
       "lon": 46.84865550277165,
       "areaKm2": 2731795.318445554
+    },
+    {
+      "id": "holy-roman-empire-1556ce",
+      "lineage": "hre",
+      "member": 0,
+      "label": "Holy Roman Empire",
+      "tStart": 469.0,
+      "tEnd": 461.0,
+      "lat": 51.079050064086914,
+      "lon": 8.624179823184322,
+      "areaKm2": 294427.70517397445
     },
     {
       "id": "kingdom-of-spain-1556ce",
@@ -7332,6 +8498,28 @@
       "lat": 32.107421875,
       "lon": 70.74542284352506,
       "areaKm2": 506138.2744874006
+    },
+    {
+      "id": "ottoman-empire-1556ce",
+      "lineage": "ottoman",
+      "member": 0,
+      "label": "Ottoman Empire",
+      "tStart": 469.0,
+      "tEnd": 461.0,
+      "lat": 40.19,
+      "lon": 29.06,
+      "areaKm2": 3689784.820160818
+    },
+    {
+      "id": "portuguese-empire-1556ce",
+      "lineage": "portugal",
+      "member": 1,
+      "label": "Portuguese Empire",
+      "tStart": 469.0,
+      "tEnd": 453.0,
+      "lat": -12.97,
+      "lon": -38.51,
+      "areaKm2": 273197.6525318274
     },
     {
       "id": "safavid-dynasty-1556ce",
@@ -7383,10 +8571,21 @@
       "member": 0,
       "label": "Ottoman Empire",
       "tStart": 461.0,
-      "tEnd": 437.0,
+      "tEnd": 453.0,
       "lat": 40.19,
       "lon": 29.06,
       "areaKm2": 3641931.06148246
+    },
+    {
+      "id": "portuguese-africa-1564ce",
+      "lineage": "portugal",
+      "member": 3,
+      "label": "Portuguese Africa",
+      "tStart": 461.0,
+      "tEnd": 446.0,
+      "lat": -15.03,
+      "lon": 40.73,
+      "areaKm2": 30618.134406707355
     },
     {
       "id": "portuguese-colonies-1564ce",
@@ -7400,12 +8599,23 @@
       "areaKm2": 38049.1856339247
     },
     {
+      "id": "spanish-empire-1564ce",
+      "lineage": "spain",
+      "member": 1,
+      "label": "Spanish Empire",
+      "tStart": 461.0,
+      "tEnd": 453.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 4228461.745006458
+    },
+    {
       "id": "holy-roman-empire-1572ce",
       "lineage": "hre",
       "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 453.0,
-      "tEnd": 406.0,
+      "tEnd": 437.0,
       "lat": 51.079050064086914,
       "lon": 8.624179823184322,
       "areaKm2": 297919.09899910726
@@ -7422,6 +8632,17 @@
       "areaKm2": 1385841.9677368102
     },
     {
+      "id": "ottoman-empire-1572ce",
+      "lineage": "ottoman",
+      "member": 0,
+      "label": "Ottoman Empire",
+      "tStart": 453.0,
+      "tEnd": 437.0,
+      "lat": 40.19,
+      "lon": 29.06,
+      "areaKm2": 3782830.2139517656
+    },
+    {
       "id": "portuguese-empire-1572ce",
       "lineage": "portugal",
       "member": 1,
@@ -7431,6 +8652,17 @@
       "lat": -12.97,
       "lon": -38.51,
       "areaKm2": 363034.58426779794
+    },
+    {
+      "id": "spanish-empire-1572ce",
+      "lineage": "spain",
+      "member": 1,
+      "label": "Spanish Empire",
+      "tStart": 453.0,
+      "tEnd": 446.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 4409345.426698744
     },
     {
       "id": "mughal-empire-1579ce",
@@ -7471,7 +8703,7 @@
       "member": 2,
       "label": "Iberian Union",
       "tStart": 443.0,
-      "tEnd": 385.0,
+      "tEnd": 430.0,
       "lat": 39.8699893951416,
       "lon": -4.632060556679993,
       "areaKm2": 800730.6966665413
@@ -7497,6 +8729,17 @@
       "lat": 57.281951904296875,
       "lon": 47.71047295349004,
       "areaKm2": 3597187.0668574544
+    },
+    {
+      "id": "holy-roman-empire-1588ce",
+      "lineage": "hre",
+      "member": 0,
+      "label": "Holy Roman Empire",
+      "tStart": 437.0,
+      "tEnd": 425.0,
+      "lat": 51.079050064086914,
+      "lon": 8.624179823184322,
+      "areaKm2": 294747.31212757545
     },
     {
       "id": "mughal-empire-1588ce",
@@ -7543,6 +8786,17 @@
       "areaKm2": 6080816.034449814
     },
     {
+      "id": "iberian-union-1595ce",
+      "lineage": "spain",
+      "member": 2,
+      "label": "Iberian Union",
+      "tStart": 430.0,
+      "tEnd": 423.0,
+      "lat": 39.8699893951416,
+      "lon": -4.632060556679993,
+      "areaKm2": 800117.5908118434
+    },
+    {
       "id": "mughal-empire-1595ce",
       "lineage": "timurid",
       "member": 1,
@@ -7570,7 +8824,7 @@
       "member": 1,
       "label": "Spanish Empire",
       "tStart": 430.0,
-      "tEnd": 416.0,
+      "tEnd": 425.0,
       "lat": 40.42,
       "lon": -3.7,
       "areaKm2": 6401677.26593522
@@ -7585,6 +8839,17 @@
       "lat": 58.35451889038086,
       "lon": 53.88313936018408,
       "areaKm2": 4790798.590125488
+    },
+    {
+      "id": "holy-roman-empire-1600ce",
+      "lineage": "hre",
+      "member": 0,
+      "label": "Holy Roman Empire",
+      "tStart": 425.0,
+      "tEnd": 416.0,
+      "lat": 51.079050064086914,
+      "lon": 8.624179823184322,
+      "areaKm2": 292947.42178128567
     },
     {
       "id": "portuguese-ceylon-1600ce",
@@ -7607,6 +8872,50 @@
       "lat": 15.5,
       "lon": 73.83,
       "areaKm2": 1161.12883922795
+    },
+    {
+      "id": "spanish-empire-1600ce",
+      "lineage": "spain",
+      "member": 1,
+      "label": "Spanish Empire",
+      "tStart": 425.0,
+      "tEnd": 416.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 6381370.906144027
+    },
+    {
+      "id": "iberian-union-1602ce",
+      "lineage": "spain",
+      "member": 2,
+      "label": "Iberian Union",
+      "tStart": 423.0,
+      "tEnd": 416.0,
+      "lat": 39.8699893951416,
+      "lon": -4.632060556679993,
+      "areaKm2": 798802.2374913896
+    },
+    {
+      "id": "holy-roman-empire-1609ce",
+      "lineage": "hre",
+      "member": 0,
+      "label": "Holy Roman Empire",
+      "tStart": 416.0,
+      "tEnd": 406.0,
+      "lat": 51.079050064086914,
+      "lon": 8.624179823184322,
+      "areaKm2": 296449.59251650254
+    },
+    {
+      "id": "iberian-union-1609ce",
+      "lineage": "spain",
+      "member": 2,
+      "label": "Iberian Union",
+      "tStart": 416.0,
+      "tEnd": 403.0,
+      "lat": 39.8699893951416,
+      "lon": -4.632060556679993,
+      "areaKm2": 798596.3463715761
     },
     {
       "id": "ottoman-empire-1609ce",
@@ -7636,7 +8945,7 @@
       "member": 1,
       "label": "Spanish Empire",
       "tStart": 416.0,
-      "tEnd": 406.0,
+      "tEnd": 413.0,
       "lat": 40.42,
       "lon": -3.7,
       "areaKm2": 6508242.115489379
@@ -7673,6 +8982,17 @@
       "lat": 33.6502628326416,
       "lon": 56.02480554869163,
       "areaKm2": 2599316.080215229
+    },
+    {
+      "id": "spanish-empire-1612ce",
+      "lineage": "spain",
+      "member": 1,
+      "label": "Spanish Empire",
+      "tStart": 413.0,
+      "tEnd": 406.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 6533802.16103786
     },
     {
       "id": "holy-roman-empire-1619ce",
@@ -7724,7 +9044,7 @@
       "member": 1,
       "label": "Spanish Empire",
       "tStart": 406.0,
-      "tEnd": 393.0,
+      "tEnd": 399.0,
       "lat": 40.42,
       "lon": -3.7,
       "areaKm2": 6902467.343150951
@@ -7752,6 +9072,17 @@
       "areaKm2": 288630.7040988067
     },
     {
+      "id": "iberian-union-1622ce",
+      "lineage": "spain",
+      "member": 2,
+      "label": "Iberian Union",
+      "tStart": 403.0,
+      "tEnd": 393.0,
+      "lat": 39.8699893951416,
+      "lon": -4.632060556679993,
+      "areaKm2": 803850.3787679482
+    },
+    {
       "id": "later-jin-dynasty-1622ce",
       "lineage": "china",
       "member": 22,
@@ -7774,6 +9105,28 @@
       "areaKm2": 168858.18486686033
     },
     {
+      "id": "spanish-empire-1626ce",
+      "lineage": "spain",
+      "member": 1,
+      "label": "Spanish Empire",
+      "tStart": 399.0,
+      "tEnd": 396.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 7065991.304190276
+    },
+    {
+      "id": "spanish-empire-1629ce",
+      "lineage": "spain",
+      "member": 1,
+      "label": "Spanish Empire",
+      "tStart": 396.0,
+      "tEnd": 393.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 7118638.075837533
+    },
+    {
       "id": "holy-roman-empire-1632ce",
       "lineage": "hre",
       "member": 0,
@@ -7783,6 +9136,17 @@
       "lat": 52.14979934692383,
       "lon": 9.575329163855752,
       "areaKm2": 184232.4701695291
+    },
+    {
+      "id": "iberian-union-1632ce",
+      "lineage": "spain",
+      "member": 2,
+      "label": "Iberian Union",
+      "tStart": 393.0,
+      "tEnd": 389.0,
+      "lat": 39.8699893951416,
+      "lon": -4.632060556679993,
+      "areaKm2": 793927.4145288557
     },
     {
       "id": "later-jin-dynasty-1632ce",
@@ -7812,7 +9176,7 @@
       "member": 1,
       "label": "Spanish Empire",
       "tStart": 393.0,
-      "tEnd": 385.0,
+      "tEnd": 389.0,
       "lat": 40.42,
       "lon": -3.7,
       "areaKm2": 7103554.785231877
@@ -7838,6 +9202,17 @@
       "lat": 50.87884712219238,
       "lon": 8.93400112165,
       "areaKm2": 278182.7290677738
+    },
+    {
+      "id": "iberian-union-1636ce",
+      "lineage": "spain",
+      "member": 2,
+      "label": "Iberian Union",
+      "tStart": 389.0,
+      "tEnd": 385.0,
+      "lat": 39.8699893951416,
+      "lon": -4.632060556679993,
+      "areaKm2": 803630.1834503488
     },
     {
       "id": "later-jin-dynasty-1636ce",
@@ -7873,6 +9248,17 @@
       "areaKm2": 3379815.349673569
     },
     {
+      "id": "spanish-empire-1636ce",
+      "lineage": "spain",
+      "member": 1,
+      "label": "Spanish Empire",
+      "tStart": 389.0,
+      "tEnd": 385.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 7064215.52088242
+    },
+    {
       "id": "tsardom-of-russia-1636ce",
       "lineage": "russia",
       "member": 0,
@@ -7900,7 +9286,7 @@
       "member": 0,
       "label": "Spain",
       "tStart": 385.0,
-      "tEnd": 334.0,
+      "tEnd": 377.0,
       "lat": 40.42,
       "lon": -3.7,
       "areaKm2": 660641.1640371847
@@ -7922,7 +9308,7 @@
       "member": 0,
       "label": "Ottoman Empire",
       "tStart": 385.0,
-      "tEnd": 319.0,
+      "tEnd": 380.0,
       "lat": 40.19,
       "lon": 29.06,
       "areaKm2": 3522723.6527446457
@@ -7955,7 +9341,7 @@
       "member": 1,
       "label": "Spanish Empire",
       "tStart": 385.0,
-      "tEnd": 338.0,
+      "tEnd": 366.0,
       "lat": 40.42,
       "lon": -3.7,
       "areaKm2": 6152470.753456211
@@ -7994,12 +9380,23 @@
       "areaKm2": 241797.63845929437
     },
     {
+      "id": "ottoman-empire-1645ce",
+      "lineage": "ottoman",
+      "member": 0,
+      "label": "Ottoman Empire",
+      "tStart": 380.0,
+      "tEnd": 377.0,
+      "lat": 40.19,
+      "lon": 29.06,
+      "areaKm2": 3517890.488274449
+    },
+    {
       "id": "portuguese-empire-1645ce",
       "lineage": "portugal",
       "member": 1,
       "label": "Portuguese Empire",
       "tStart": 380.0,
-      "tEnd": 355.0,
+      "tEnd": 363.0,
       "lat": -12.97,
       "lon": -38.51,
       "areaKm2": 856054.7659796434
@@ -8032,10 +9429,32 @@
       "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 377.0,
-      "tEnd": 352.0,
+      "tEnd": 363.0,
       "lat": 50.87884712219238,
       "lon": 8.934023716110941,
       "areaKm2": 252522.00747887915
+    },
+    {
+      "id": "kingdom-of-spain-1648ce",
+      "lineage": "spain",
+      "member": 0,
+      "label": "Spain",
+      "tStart": 377.0,
+      "tEnd": 355.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 677286.8103781485
+    },
+    {
+      "id": "ottoman-empire-1648ce",
+      "lineage": "ottoman",
+      "member": 0,
+      "label": "Ottoman Empire",
+      "tStart": 377.0,
+      "tEnd": 329.0,
+      "lat": 40.19,
+      "lon": 29.06,
+      "areaKm2": 3522234.7767404616
     },
     {
       "id": "portuguese-colonies-1648ce",
@@ -8120,10 +9539,21 @@
       "member": 2,
       "label": "Portuguese India",
       "tStart": 366.0,
-      "tEnd": 355.0,
+      "tEnd": 363.0,
       "lat": 15.5,
       "lon": 73.83,
       "areaKm2": 31903.621165910972
+    },
+    {
+      "id": "spanish-empire-1659ce",
+      "lineage": "spain",
+      "member": 1,
+      "label": "Spanish Empire",
+      "tStart": 366.0,
+      "tEnd": 355.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 6226721.655424202
     },
     {
       "id": "tsardom-of-russia-1659ce",
@@ -8137,6 +9567,39 @@
       "areaKm2": 12410709.196363697
     },
     {
+      "id": "holy-roman-empire-1662ce",
+      "lineage": "hre",
+      "member": 0,
+      "label": "Holy Roman Empire",
+      "tStart": 363.0,
+      "tEnd": 352.0,
+      "lat": 50.87884712219238,
+      "lon": 8.934023716110941,
+      "areaKm2": 260882.5989036391
+    },
+    {
+      "id": "portuguese-colonies-1662ce",
+      "lineage": "portugal",
+      "member": 2,
+      "label": "Portuguese India",
+      "tStart": 363.0,
+      "tEnd": 355.0,
+      "lat": 15.5,
+      "lon": 73.83,
+      "areaKm2": 31322.010514473684
+    },
+    {
+      "id": "portuguese-empire-1662ce",
+      "lineage": "portugal",
+      "member": 1,
+      "label": "Portuguese Empire",
+      "tStart": 363.0,
+      "tEnd": 348.0,
+      "lat": -12.97,
+      "lon": -38.51,
+      "areaKm2": 926115.5651678308
+    },
+    {
       "id": "tsardom-of-russia-1662ce",
       "lineage": "russia",
       "member": 0,
@@ -8146,6 +9609,17 @@
       "lat": 58.910972595214844,
       "lon": 75.37605408950256,
       "areaKm2": 12180452.537169404
+    },
+    {
+      "id": "kingdom-of-spain-1670ce",
+      "lineage": "spain",
+      "member": 0,
+      "label": "Spain",
+      "tStart": 355.0,
+      "tEnd": 348.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 674516.4809715218
     },
     {
       "id": "portuguese-ceylon-1670ce",
@@ -8170,15 +9644,15 @@
       "areaKm2": 27477.674054553703
     },
     {
-      "id": "portuguese-empire-1670ce",
-      "lineage": "portugal",
+      "id": "spanish-empire-1670ce",
+      "lineage": "spain",
       "member": 1,
-      "label": "Portuguese Empire",
+      "label": "Spanish Empire",
       "tStart": 355.0,
-      "tEnd": 325.0,
-      "lat": -12.97,
-      "lon": -38.51,
-      "areaKm2": 1015253.7130824697
+      "tEnd": 342.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 6263658.379671624
     },
     {
       "id": "tsardom-of-russia-1670ce",
@@ -8197,7 +9671,7 @@
       "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 352.0,
-      "tEnd": 329.0,
+      "tEnd": 334.0,
       "lat": 50.87884712219238,
       "lon": 8.934021153262544,
       "areaKm2": 242876.81746153499
@@ -8212,6 +9686,28 @@
       "lat": 39.9,
       "lon": 116.4,
       "areaKm2": 5292611.505493792
+    },
+    {
+      "id": "kingdom-of-spain-1677ce",
+      "lineage": "spain",
+      "member": 0,
+      "label": "Spain",
+      "tStart": 348.0,
+      "tEnd": 334.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 653430.5470096902
+    },
+    {
+      "id": "portuguese-empire-1677ce",
+      "lineage": "portugal",
+      "member": 1,
+      "label": "Portuguese Empire",
+      "tStart": 348.0,
+      "tEnd": 342.0,
+      "lat": -12.97,
+      "lon": -38.51,
+      "areaKm2": 1055736.3991483892
     },
     {
       "id": "qing-dynasty-1677ce",
@@ -8236,6 +9732,17 @@
       "areaKm2": 13498030.886064269
     },
     {
+      "id": "portuguese-empire-1683ce",
+      "lineage": "portugal",
+      "member": 1,
+      "label": "Portuguese Empire",
+      "tStart": 342.0,
+      "tEnd": 325.0,
+      "lat": -12.97,
+      "lon": -38.51,
+      "areaKm2": 1062518.444494342
+    },
+    {
       "id": "qing-dynasty-1683ce",
       "lineage": "china",
       "member": 23,
@@ -8245,6 +9752,17 @@
       "lat": 39.9,
       "lon": 116.4,
       "areaKm2": 6269215.303459675
+    },
+    {
+      "id": "spanish-empire-1683ce",
+      "lineage": "spain",
+      "member": 1,
+      "label": "Spanish Empire",
+      "tStart": 342.0,
+      "tEnd": 334.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 6248820.9666993795
     },
     {
       "id": "qing-dynasty-1687ce",
@@ -8258,15 +9776,15 @@
       "areaKm2": 6004121.404490215
     },
     {
-      "id": "spanish-empire-1687ce",
-      "lineage": "spain",
-      "member": 1,
-      "label": "Spanish Empire",
-      "tStart": 338.0,
-      "tEnd": 325.0,
-      "lat": 40.42,
-      "lon": -3.7,
-      "areaKm2": 6482716.385427115
+      "id": "holy-roman-empire-1691ce",
+      "lineage": "hre",
+      "member": 0,
+      "label": "Holy Roman Empire",
+      "tStart": 334.0,
+      "tEnd": 329.0,
+      "lat": 50.87884712219238,
+      "lon": 8.934023716110941,
+      "areaKm2": 234708.00679525512
     },
     {
       "id": "kingdom-of-spain-1691ce",
@@ -8274,7 +9792,7 @@
       "member": 0,
       "label": "Spain",
       "tStart": 334.0,
-      "tEnd": 323.0,
+      "tEnd": 325.0,
       "lat": 40.42,
       "lon": -3.7,
       "areaKm2": 641408.3707732
@@ -8302,12 +9820,23 @@
       "areaKm2": 6301194.509509596
     },
     {
+      "id": "spanish-empire-1691ce",
+      "lineage": "spain",
+      "member": 1,
+      "label": "Spanish Empire",
+      "tStart": 334.0,
+      "tEnd": 325.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 6511538.087687542
+    },
+    {
       "id": "tsardom-of-russia-1691ce",
       "lineage": "russia",
       "member": 0,
       "label": "Tsardom of Russia",
       "tStart": 334.0,
-      "tEnd": 312.0,
+      "tEnd": 329.0,
       "lat": 60.69875717163086,
       "lon": 93.89275775475306,
       "areaKm2": 13648235.049101973
@@ -8324,6 +9853,17 @@
       "areaKm2": 228078.61921921006
     },
     {
+      "id": "ottoman-empire-1696ce",
+      "lineage": "ottoman",
+      "member": 0,
+      "label": "Ottoman Empire",
+      "tStart": 329.0,
+      "tEnd": 319.0,
+      "lat": 40.19,
+      "lon": 29.06,
+      "areaKm2": 3442277.880255141
+    },
+    {
       "id": "qing-dynasty-1696ce",
       "lineage": "china",
       "member": 23,
@@ -8333,6 +9873,28 @@
       "lat": 39.9,
       "lon": 116.4,
       "areaKm2": 8472403.43522642
+    },
+    {
+      "id": "tsardom-of-russia-1696ce",
+      "lineage": "russia",
+      "member": 0,
+      "label": "Tsardom of Russia",
+      "tStart": 329.0,
+      "tEnd": 312.0,
+      "lat": 60.69875717163086,
+      "lon": 93.89275775475306,
+      "areaKm2": 13648924.640130889
+    },
+    {
+      "id": "kingdom-of-spain-1700ce",
+      "lineage": "spain",
+      "member": 0,
+      "label": "Spain",
+      "tStart": 325.0,
+      "tEnd": 323.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 657429.7387913618
     },
     {
       "id": "portuguese-empire-1700ce",
@@ -8362,7 +9924,7 @@
       "member": 1,
       "label": "Spanish Empire",
       "tStart": 325.0,
-      "tEnd": 273.0,
+      "tEnd": 319.0,
       "lat": 40.42,
       "lon": -3.7,
       "areaKm2": 6905916.844933957
@@ -8428,10 +9990,21 @@
       "member": 1,
       "label": "Portuguese Empire",
       "tStart": 319.0,
-      "tEnd": 307.0,
+      "tEnd": 312.0,
       "lat": -12.97,
       "lon": -38.51,
       "areaKm2": 1274341.4016766388
+    },
+    {
+      "id": "spanish-empire-1706ce",
+      "lineage": "spain",
+      "member": 1,
+      "label": "Spanish Empire",
+      "tStart": 319.0,
+      "tEnd": 316.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 6830485.0296501955
     },
     {
       "id": "british-colonial-empire-1709ce",
@@ -8450,7 +10023,7 @@
       "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 316.0,
-      "tEnd": 291.0,
+      "tEnd": 312.0,
       "lat": 50.545555114746094,
       "lon": 9.079696114045419,
       "areaKm2": 204784.3604833613
@@ -8461,7 +10034,7 @@
       "member": 0,
       "label": "Great Britain",
       "tStart": 316.0,
-      "tEnd": 205.0,
+      "tEnd": 231.0,
       "lat": 51.51,
       "lon": -0.13,
       "areaKm2": 341477.4116260992
@@ -8489,6 +10062,17 @@
       "areaKm2": 614489.5336679567
     },
     {
+      "id": "spanish-empire-1709ce",
+      "lineage": "spain",
+      "member": 1,
+      "label": "Spanish Empire",
+      "tStart": 316.0,
+      "tEnd": 307.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 6925947.006290482
+    },
+    {
       "id": "british-colonial-empire-1713ce",
       "lineage": "britain",
       "member": 1,
@@ -8500,12 +10084,23 @@
       "areaKm2": 417790.7259293983
     },
     {
+      "id": "holy-roman-empire-1713ce",
+      "lineage": "hre",
+      "member": 0,
+      "label": "Holy Roman Empire",
+      "tStart": 312.0,
+      "tEnd": 284.0,
+      "lat": 50.545555114746094,
+      "lon": 8.998680389766617,
+      "areaKm2": 200064.06022268487
+    },
+    {
       "id": "kingdom-of-spain-1713ce",
       "lineage": "spain",
       "member": 0,
       "label": "Spain",
       "tStart": 312.0,
-      "tEnd": 291.0,
+      "tEnd": 307.0,
       "lat": 40.42,
       "lon": -3.7,
       "areaKm2": 494305.10848279943
@@ -8522,12 +10117,23 @@
       "areaKm2": 2883145.516143614
     },
     {
+      "id": "portuguese-empire-1713ce",
+      "lineage": "portugal",
+      "member": 1,
+      "label": "Portuguese Empire",
+      "tStart": 312.0,
+      "tEnd": 307.0,
+      "lat": -12.97,
+      "lon": -38.51,
+      "areaKm2": 1341560.3097667703
+    },
+    {
       "id": "safavid-dynasty-1713ce",
       "lineage": "persia",
       "member": 3,
       "label": "Safavid Dynasty",
       "tStart": 312.0,
-      "tEnd": 304.0,
+      "tEnd": 307.0,
       "lat": 33.6502628326416,
       "lon": 54.61953928405105,
       "areaKm2": 2025985.1777236871
@@ -8553,6 +10159,17 @@
       "lat": 51.51,
       "lon": -0.13,
       "areaKm2": 483311.34368017426
+    },
+    {
+      "id": "kingdom-of-spain-1718ce",
+      "lineage": "spain",
+      "member": 0,
+      "label": "Spain",
+      "tStart": 307.0,
+      "tEnd": 291.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 543074.4159792295
     },
     {
       "id": "mughal-empire-1718ce",
@@ -8582,10 +10199,32 @@
       "member": 1,
       "label": "Portuguese Empire",
       "tStart": 307.0,
-      "tEnd": 273.0,
+      "tEnd": 304.0,
       "lat": -12.97,
       "lon": -38.51,
       "areaKm2": 1583875.1225593532
+    },
+    {
+      "id": "safavid-dynasty-1718ce",
+      "lineage": "persia",
+      "member": 3,
+      "label": "Safavid Dynasty",
+      "tStart": 307.0,
+      "tEnd": 304.0,
+      "lat": 33.6502628326416,
+      "lon": 54.61953928405105,
+      "areaKm2": 2025050.1775880423
+    },
+    {
+      "id": "spanish-empire-1718ce",
+      "lineage": "spain",
+      "member": 1,
+      "label": "Spanish Empire",
+      "tStart": 307.0,
+      "tEnd": 304.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 7023970.113201093
     },
     {
       "id": "tsardom-of-russia-1718ce",
@@ -8604,10 +10243,21 @@
       "member": 1,
       "label": "British Empire",
       "tStart": 304.0,
-      "tEnd": 284.0,
+      "tEnd": 298.0,
       "lat": 51.51,
       "lon": -0.13,
       "areaKm2": 635398.2026347867
+    },
+    {
+      "id": "portuguese-empire-1721ce",
+      "lineage": "portugal",
+      "member": 1,
+      "label": "Portuguese Empire",
+      "tStart": 304.0,
+      "tEnd": 298.0,
+      "lat": -12.97,
+      "lon": -38.51,
+      "areaKm2": 1595234.827441505
     },
     {
       "id": "russian-empire-1721ce",
@@ -8632,6 +10282,28 @@
       "areaKm2": 1372706.9049387884
     },
     {
+      "id": "spanish-empire-1721ce",
+      "lineage": "spain",
+      "member": 1,
+      "label": "Spanish Empire",
+      "tStart": 304.0,
+      "tEnd": 298.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 7039961.689151361
+    },
+    {
+      "id": "british-colonial-empire-1727ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 298.0,
+      "tEnd": 291.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 640573.0739540318
+    },
+    {
       "id": "mughal-empire-1727ce",
       "lineage": "timurid",
       "member": 1,
@@ -8654,6 +10326,17 @@
       "areaKm2": 3142373.6338935145
     },
     {
+      "id": "portuguese-empire-1727ce",
+      "lineage": "portugal",
+      "member": 1,
+      "label": "Portuguese Empire",
+      "tStart": 298.0,
+      "tEnd": 291.0,
+      "lat": -12.97,
+      "lon": -38.51,
+      "areaKm2": 1600501.7714033853
+    },
+    {
       "id": "qing-dynasty-1727ce",
       "lineage": "china",
       "member": 23,
@@ -8663,6 +10346,17 @@
       "lat": 39.9,
       "lon": 116.4,
       "areaKm2": 9164356.785596723
+    },
+    {
+      "id": "spanish-empire-1727ce",
+      "lineage": "spain",
+      "member": 1,
+      "label": "Spanish Empire",
+      "tStart": 298.0,
+      "tEnd": 284.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 7049671.467599682
     },
     {
       "id": "afsharid-iran-1734ce",
@@ -8676,15 +10370,15 @@
       "areaKm2": 1594931.8894629076
     },
     {
-      "id": "holy-roman-empire-1734ce",
-      "lineage": "hre",
-      "member": 0,
-      "label": "Holy Roman Empire",
+      "id": "british-colonial-empire-1734ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
       "tStart": 291.0,
-      "tEnd": 268.0,
-      "lat": 50.545555114746094,
-      "lon": 8.998680389766617,
-      "areaKm2": 193522.71829705907
+      "tEnd": 281.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 650778.3213146841
     },
     {
       "id": "kingdom-of-spain-1734ce",
@@ -8698,12 +10392,23 @@
       "areaKm2": 593211.553178797
     },
     {
+      "id": "portuguese-empire-1734ce",
+      "lineage": "portugal",
+      "member": 1,
+      "label": "Portuguese Empire",
+      "tStart": 291.0,
+      "tEnd": 287.0,
+      "lat": -12.97,
+      "lon": -38.51,
+      "areaKm2": 1607709.65854093
+    },
+    {
       "id": "russian-empire-1734ce",
       "lineage": "russia",
       "member": 1,
       "label": "Russian Empire",
       "tStart": 291.0,
-      "tEnd": 273.0,
+      "tEnd": 287.0,
       "lat": 56.8342170715332,
       "lon": 83.4926032458749,
       "areaKm2": 14977567.255574629
@@ -8725,10 +10430,32 @@
       "member": 0,
       "label": "Ottoman Empire",
       "tStart": 287.0,
-      "tEnd": 226.0,
+      "tEnd": 253.0,
       "lat": 40.19,
       "lon": 29.06,
       "areaKm2": 2841892.0488079395
+    },
+    {
+      "id": "portuguese-empire-1738ce",
+      "lineage": "portugal",
+      "member": 1,
+      "label": "Portuguese Empire",
+      "tStart": 287.0,
+      "tEnd": 273.0,
+      "lat": -12.97,
+      "lon": -38.51,
+      "areaKm2": 1613062.7916287223
+    },
+    {
+      "id": "russian-empire-1738ce",
+      "lineage": "russia",
+      "member": 1,
+      "label": "Russian Empire",
+      "tStart": 287.0,
+      "tEnd": 277.0,
+      "lat": 60.7340202331543,
+      "lon": 93.9339272042942,
+      "areaKm2": 14962454.870718248
     },
     {
       "id": "afsharid-iran-1741ce",
@@ -8742,15 +10469,15 @@
       "areaKm2": 3428736.163733915
     },
     {
-      "id": "british-colonial-empire-1741ce",
-      "lineage": "britain",
-      "member": 1,
-      "label": "British Empire",
+      "id": "holy-roman-empire-1741ce",
+      "lineage": "hre",
+      "member": 0,
+      "label": "Holy Roman Empire",
       "tStart": 284.0,
-      "tEnd": 273.0,
-      "lat": 51.51,
-      "lon": -0.13,
-      "areaKm2": 714365.3023418395
+      "tEnd": 277.0,
+      "lat": 51.145822525024414,
+      "lon": 7.784462392029665,
+      "areaKm2": 177999.75128718917
     },
     {
       "id": "mughal-empire-1741ce",
@@ -8764,6 +10491,17 @@
       "areaKm2": 1672708.5131603135
     },
     {
+      "id": "spanish-empire-1741ce",
+      "lineage": "spain",
+      "member": 1,
+      "label": "Spanish Empire",
+      "tStart": 284.0,
+      "tEnd": 273.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 7076574.624500047
+    },
+    {
       "id": "afsharid-iran-1744ce",
       "lineage": "persia",
       "member": 4,
@@ -8773,6 +10511,17 @@
       "lat": 33.103755950927734,
       "lon": 58.86850961410212,
       "areaKm2": 3458778.2038095375
+    },
+    {
+      "id": "british-colonial-empire-1744ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 281.0,
+      "tEnd": 273.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 740446.3486248272
     },
     {
       "id": "mughal-empire-1744ce",
@@ -8797,6 +10546,28 @@
       "areaKm2": 1373543.940115895
     },
     {
+      "id": "holy-roman-empire-1748ce",
+      "lineage": "hre",
+      "member": 0,
+      "label": "Holy Roman Empire",
+      "tStart": 277.0,
+      "tEnd": 268.0,
+      "lat": 50.345802307128906,
+      "lon": 9.076548895267475,
+      "areaKm2": 188282.08857215117
+    },
+    {
+      "id": "russian-empire-1748ce",
+      "lineage": "russia",
+      "member": 1,
+      "label": "Russian Empire",
+      "tStart": 277.0,
+      "tEnd": 263.0,
+      "lat": 60.7340202331543,
+      "lon": 93.9339272042942,
+      "areaKm2": 15062781.703597065
+    },
+    {
       "id": "afsharid-iran-1752ce",
       "lineage": "persia",
       "member": 4,
@@ -8813,7 +10584,7 @@
       "member": 1,
       "label": "British Empire",
       "tStart": 273.0,
-      "tEnd": 263.0,
+      "tEnd": 268.0,
       "lat": 51.51,
       "lon": -0.13,
       "areaKm2": 844437.3279093114
@@ -8824,21 +10595,10 @@
       "member": 1,
       "label": "Portuguese Empire",
       "tStart": 273.0,
-      "tEnd": 247.0,
+      "tEnd": 263.0,
       "lat": -12.97,
       "lon": -38.51,
       "areaKm2": 6344346.564718159
-    },
-    {
-      "id": "russian-empire-1752ce",
-      "lineage": "russia",
-      "member": 1,
-      "label": "Russian Empire",
-      "tStart": 273.0,
-      "tEnd": 256.0,
-      "lat": 60.7340202331543,
-      "lon": 93.9339272042942,
-      "areaKm2": 15244235.321998674
     },
     {
       "id": "spanish-empire-1752ce",
@@ -8852,12 +10612,23 @@
       "areaKm2": 9356847.338638302
     },
     {
+      "id": "british-colonial-empire-1757ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 268.0,
+      "tEnd": 263.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 868235.0118436225
+    },
+    {
       "id": "holy-roman-empire-1757ce",
       "lineage": "hre",
       "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 268.0,
-      "tEnd": 262.0,
+      "tEnd": 263.0,
       "lat": 49.548397064208984,
       "lon": 9.158020453440738,
       "areaKm2": 164863.277829678
@@ -8879,7 +10650,7 @@
       "member": 1,
       "label": "Spanish Empire",
       "tStart": 268.0,
-      "tEnd": 256.0,
+      "tEnd": 263.0,
       "lat": 40.42,
       "lon": -3.7,
       "areaKm2": 9713681.655269483
@@ -8896,6 +10667,17 @@
       "areaKm2": 991458.7247602791
     },
     {
+      "id": "holy-roman-empire-1762ce",
+      "lineage": "hre",
+      "member": 0,
+      "label": "Holy Roman Empire",
+      "tStart": 263.0,
+      "tEnd": 262.0,
+      "lat": 49.349435806274414,
+      "lon": 8.940983980766207,
+      "areaKm2": 150181.18263103822
+    },
+    {
       "id": "mughal-empire-1762ce",
       "lineage": "timurid",
       "member": 1,
@@ -8905,6 +10687,39 @@
       "lat": 27.647854044732654,
       "lon": 77.35695620933669,
       "areaKm2": 134918.69388197406
+    },
+    {
+      "id": "portuguese-empire-1762ce",
+      "lineage": "portugal",
+      "member": 1,
+      "label": "Portuguese Empire",
+      "tStart": 263.0,
+      "tEnd": 262.0,
+      "lat": -12.97,
+      "lon": -38.51,
+      "areaKm2": 6502285.256563525
+    },
+    {
+      "id": "russian-empire-1762ce",
+      "lineage": "russia",
+      "member": 1,
+      "label": "Russian Empire",
+      "tStart": 263.0,
+      "tEnd": 262.0,
+      "lat": 60.7340202331543,
+      "lon": 93.9339272042942,
+      "areaKm2": 15322532.505575484
+    },
+    {
+      "id": "spanish-empire-1762ce",
+      "lineage": "spain",
+      "member": 1,
+      "label": "Spanish Empire",
+      "tStart": 263.0,
+      "tEnd": 262.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 9725277.564229729
     },
     {
       "id": "british-colonial-empire-1763ce",
@@ -8923,10 +10738,43 @@
       "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 262.0,
-      "tEnd": 245.0,
+      "tEnd": 250.0,
       "lat": 50.345802307128906,
       "lon": 9.076548895267475,
       "areaKm2": 186702.61919090507
+    },
+    {
+      "id": "portuguese-empire-1763ce",
+      "lineage": "portugal",
+      "member": 1,
+      "label": "Portuguese Empire",
+      "tStart": 262.0,
+      "tEnd": 256.0,
+      "lat": -12.97,
+      "lon": -38.51,
+      "areaKm2": 6509222.265657723
+    },
+    {
+      "id": "russian-empire-1763ce",
+      "lineage": "russia",
+      "member": 1,
+      "label": "Russian Empire",
+      "tStart": 262.0,
+      "tEnd": 256.0,
+      "lat": 60.7340202331543,
+      "lon": 93.9339272042942,
+      "areaKm2": 15244051.53599172
+    },
+    {
+      "id": "spanish-empire-1763ce",
+      "lineage": "spain",
+      "member": 1,
+      "label": "Spanish Empire",
+      "tStart": 262.0,
+      "tEnd": 256.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 9553305.68811721
     },
     {
       "id": "british-colonial-empire-1769ce",
@@ -8934,10 +10782,21 @@
       "member": 1,
       "label": "British Empire",
       "tStart": 256.0,
-      "tEnd": 250.0,
+      "tEnd": 253.0,
       "lat": 51.51,
       "lon": -0.13,
       "areaKm2": 1887693.944599545
+    },
+    {
+      "id": "portuguese-empire-1769ce",
+      "lineage": "portugal",
+      "member": 1,
+      "label": "Portuguese Empire",
+      "tStart": 256.0,
+      "tEnd": 253.0,
+      "lat": -12.97,
+      "lon": -38.51,
+      "areaKm2": 6522504.092865969
     },
     {
       "id": "russian-empire-1769ce",
@@ -8956,10 +10815,21 @@
       "member": 1,
       "label": "Spanish Empire",
       "tStart": 256.0,
-      "tEnd": 247.0,
+      "tEnd": 253.0,
       "lat": 40.42,
       "lon": -3.7,
       "areaKm2": 9781863.679668594
+    },
+    {
+      "id": "british-colonial-empire-1772ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 253.0,
+      "tEnd": 250.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 1927237.5970138954
     },
     {
       "id": "mughal-empire-1772ce",
@@ -8973,6 +10843,28 @@
       "areaKm2": 327991.3892360867
     },
     {
+      "id": "ottoman-empire-1772ce",
+      "lineage": "ottoman",
+      "member": 0,
+      "label": "Ottoman Empire",
+      "tStart": 253.0,
+      "tEnd": 220.0,
+      "lat": 40.19,
+      "lon": 29.06,
+      "areaKm2": 2827054.6507569198
+    },
+    {
+      "id": "portuguese-empire-1772ce",
+      "lineage": "portugal",
+      "member": 1,
+      "label": "Portuguese Empire",
+      "tStart": 253.0,
+      "tEnd": 247.0,
+      "lat": -12.97,
+      "lon": -38.51,
+      "areaKm2": 6537009.602662917
+    },
+    {
       "id": "russian-empire-1772ce",
       "lineage": "russia",
       "member": 1,
@@ -8982,6 +10874,17 @@
       "lat": 60.52248764038086,
       "lon": 93.71616967729781,
       "areaKm2": 16045903.757339874
+    },
+    {
+      "id": "spanish-empire-1772ce",
+      "lineage": "spain",
+      "member": 1,
+      "label": "Spanish Empire",
+      "tStart": 253.0,
+      "tEnd": 250.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 9804859.600166518
     },
     {
       "id": "british-colonial-empire-1775ce",
@@ -8995,6 +10898,17 @@
       "areaKm2": 1041208.9548577217
     },
     {
+      "id": "holy-roman-empire-1775ce",
+      "lineage": "hre",
+      "member": 0,
+      "label": "Holy Roman Empire",
+      "tStart": 250.0,
+      "tEnd": 234.0,
+      "lat": 50.545555114746094,
+      "lon": 8.998680389766617,
+      "areaKm2": 190647.23389068656
+    },
+    {
       "id": "russian-empire-1775ce",
       "lineage": "russia",
       "member": 1,
@@ -9006,6 +10920,17 @@
       "areaKm2": 15985146.624857416
     },
     {
+      "id": "spanish-empire-1775ce",
+      "lineage": "spain",
+      "member": 1,
+      "label": "Spanish Empire",
+      "tStart": 250.0,
+      "tEnd": 249.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 9809934.159703424
+    },
+    {
       "id": "british-colonial-empire-1776ce",
       "lineage": "britain",
       "member": 1,
@@ -9015,6 +10940,17 @@
       "lat": 51.51,
       "lon": -0.13,
       "areaKm2": 935723.3080197739
+    },
+    {
+      "id": "spanish-empire-1776ce",
+      "lineage": "spain",
+      "member": 1,
+      "label": "Spanish Empire",
+      "tStart": 249.0,
+      "tEnd": 247.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 9813031.082097325
     },
     {
       "id": "british-colonial-empire-1778ce",
@@ -9033,7 +10969,7 @@
       "member": 1,
       "label": "Portuguese Empire",
       "tStart": 247.0,
-      "tEnd": 205.0,
+      "tEnd": 220.0,
       "lat": -12.97,
       "lon": -38.51,
       "areaKm2": 7832513.690825151
@@ -9044,7 +10980,7 @@
       "member": 1,
       "label": "Spanish Empire",
       "tStart": 247.0,
-      "tEnd": 231.0,
+      "tEnd": 245.0,
       "lat": 40.42,
       "lon": -3.7,
       "areaKm2": 11006062.944846926
@@ -9061,15 +10997,15 @@
       "areaKm2": 1189040.3832472987
     },
     {
-      "id": "holy-roman-empire-1780ce",
-      "lineage": "hre",
-      "member": 0,
-      "label": "Holy Roman Empire",
+      "id": "spanish-empire-1780ce",
+      "lineage": "spain",
+      "member": 1,
+      "label": "Spanish Empire",
       "tStart": 245.0,
-      "tEnd": 231.0,
-      "lat": 50.512258529663086,
-      "lon": 9.36233652729072,
-      "areaKm2": 177320.43656484742
+      "tEnd": 244.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 11011690.491776573
     },
     {
       "id": "british-colonial-empire-1781ce",
@@ -9088,10 +11024,21 @@
       "member": 0,
       "label": "Spain",
       "tStart": 244.0,
-      "tEnd": 216.0,
+      "tEnd": 229.0,
       "lat": 40.42,
       "lon": -3.7,
       "areaKm2": 502737.6272321326
+    },
+    {
+      "id": "spanish-empire-1781ce",
+      "lineage": "spain",
+      "member": 1,
+      "label": "Spanish Empire",
+      "tStart": 244.0,
+      "tEnd": 242.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 11172220.73064271
     },
     {
       "id": "british-colonial-empire-1783ce",
@@ -9099,7 +11046,7 @@
       "member": 1,
       "label": "British Empire",
       "tStart": 242.0,
-      "tEnd": 228.0,
+      "tEnd": 237.0,
       "lat": 51.51,
       "lon": -0.13,
       "areaKm2": 725178.2072016032
@@ -9110,7 +11057,7 @@
       "member": 1,
       "label": "Mughal Empire",
       "tStart": 242.0,
-      "tEnd": 220.0,
+      "tEnd": 234.0,
       "lat": 28.058100700378418,
       "lon": 73.51959228515625,
       "areaKm2": 364594.21497665916
@@ -9121,10 +11068,32 @@
       "member": 1,
       "label": "Russian Empire",
       "tStart": 242.0,
-      "tEnd": 233.0,
+      "tEnd": 237.0,
       "lat": 60.1706428527832,
       "lon": 93.23625503860086,
       "areaKm2": 16234154.999322176
+    },
+    {
+      "id": "spanish-empire-1783ce",
+      "lineage": "spain",
+      "member": 1,
+      "label": "Spanish Empire",
+      "tStart": 242.0,
+      "tEnd": 237.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 11197454.202675482
+    },
+    {
+      "id": "british-colonial-empire-1788ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 237.0,
+      "tEnd": 231.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 695407.5211288169
     },
     {
       "id": "qajar-dynasty-1788ce",
@@ -9138,6 +11107,50 @@
       "areaKm2": 579480.4244345109
     },
     {
+      "id": "russian-empire-1788ce",
+      "lineage": "russia",
+      "member": 1,
+      "label": "Russian Empire",
+      "tStart": 237.0,
+      "tEnd": 234.0,
+      "lat": 60.1706428527832,
+      "lon": 93.23625503860086,
+      "areaKm2": 16239498.417156516
+    },
+    {
+      "id": "spanish-empire-1788ce",
+      "lineage": "spain",
+      "member": 1,
+      "label": "Spanish Empire",
+      "tStart": 237.0,
+      "tEnd": 234.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 11247994.714923289
+    },
+    {
+      "id": "holy-roman-empire-1791ce",
+      "lineage": "hre",
+      "member": 0,
+      "label": "Holy Roman Empire",
+      "tStart": 234.0,
+      "tEnd": 231.0,
+      "lat": 50.512258529663086,
+      "lon": 9.362332687754131,
+      "areaKm2": 170540.7193921593
+    },
+    {
+      "id": "mughal-empire-1791ce",
+      "lineage": "timurid",
+      "member": 1,
+      "label": "Mughal Empire",
+      "tStart": 234.0,
+      "tEnd": 220.0,
+      "lat": 28.058100700378418,
+      "lon": 73.51959228515625,
+      "areaKm2": 362351.5356496947
+    },
+    {
       "id": "qajar-dynasty-1791ce",
       "lineage": "persia",
       "member": 5,
@@ -9149,15 +11162,48 @@
       "areaKm2": 964649.884740884
     },
     {
+      "id": "russian-empire-1791ce",
+      "lineage": "russia",
+      "member": 1,
+      "label": "Russian Empire",
+      "tStart": 234.0,
+      "tEnd": 233.0,
+      "lat": 60.1706428527832,
+      "lon": 93.23625503860086,
+      "areaKm2": 16406076.262359273
+    },
+    {
+      "id": "spanish-empire-1791ce",
+      "lineage": "spain",
+      "member": 1,
+      "label": "Spanish Empire",
+      "tStart": 234.0,
+      "tEnd": 231.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 11252480.149015097
+    },
+    {
       "id": "russian-empire-1792ce",
       "lineage": "russia",
       "member": 1,
       "label": "Russian Empire",
       "tStart": 233.0,
-      "tEnd": 220.0,
+      "tEnd": 231.0,
       "lat": 60.1706428527832,
       "lon": 93.23625503860086,
       "areaKm2": 16525275.91501365
+    },
+    {
+      "id": "british-colonial-empire-1794ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 231.0,
+      "tEnd": 229.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 699354.1022738604
     },
     {
       "id": "holy-roman-empire-1794ce",
@@ -9169,6 +11215,17 @@
       "lat": 50.512258529663086,
       "lon": 9.534612514612718,
       "areaKm2": 152523.48785031834
+    },
+    {
+      "id": "kingdom-of-great-britain-1794ce",
+      "lineage": "britain",
+      "member": 0,
+      "label": "Great Britain",
+      "tStart": 231.0,
+      "tEnd": 228.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 352869.1377597232
     },
     {
       "id": "qajar-dynasty-1794ce",
@@ -9193,15 +11250,37 @@
       "areaKm2": 12509656.600969313
     },
     {
+      "id": "russian-empire-1794ce",
+      "lineage": "russia",
+      "member": 1,
+      "label": "Russian Empire",
+      "tStart": 231.0,
+      "tEnd": 229.0,
+      "lat": 60.1706428527832,
+      "lon": 93.23625503860086,
+      "areaKm2": 16691469.817944312
+    },
+    {
       "id": "spanish-empire-1794ce",
       "lineage": "spain",
       "member": 1,
       "label": "Spanish Empire",
       "tStart": 231.0,
-      "tEnd": 214.0,
+      "tEnd": 229.0,
       "lat": 40.42,
       "lon": -3.7,
       "areaKm2": 11256627.987370105
+    },
+    {
+      "id": "british-colonial-empire-1796ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 229.0,
+      "tEnd": 228.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 714471.8886504548
     },
     {
       "id": "holy-roman-empire-1796ce",
@@ -9215,12 +11294,45 @@
       "areaKm2": 138322.99465214903
     },
     {
+      "id": "kingdom-of-spain-1796ce",
+      "lineage": "spain",
+      "member": 0,
+      "label": "Spain",
+      "tStart": 229.0,
+      "tEnd": 228.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 495298.3638777526
+    },
+    {
+      "id": "russian-empire-1796ce",
+      "lineage": "russia",
+      "member": 1,
+      "label": "Russian Empire",
+      "tStart": 229.0,
+      "tEnd": 226.0,
+      "lat": 58.56293296813965,
+      "lon": 82.40707111003869,
+      "areaKm2": 16752532.15768875
+    },
+    {
+      "id": "spanish-empire-1796ce",
+      "lineage": "spain",
+      "member": 1,
+      "label": "Spanish Empire",
+      "tStart": 229.0,
+      "tEnd": 228.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 11256586.127387328
+    },
+    {
       "id": "british-colonial-empire-1797ce",
       "lineage": "britain",
       "member": 1,
       "label": "British Empire",
       "tStart": 228.0,
-      "tEnd": 214.0,
+      "tEnd": 226.0,
       "lat": 51.51,
       "lon": -0.13,
       "areaKm2": 738183.7620280149
@@ -9237,15 +11349,114 @@
       "areaKm2": 143902.055119705
     },
     {
-      "id": "ottoman-empire-1799ce",
-      "lineage": "ottoman",
+      "id": "kingdom-of-great-britain-1797ce",
+      "lineage": "britain",
       "member": 0,
-      "label": "Ottoman Empire",
+      "label": "Great Britain",
+      "tStart": 228.0,
+      "tEnd": 226.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 342149.4616267111
+    },
+    {
+      "id": "kingdom-of-spain-1797ce",
+      "lineage": "spain",
+      "member": 0,
+      "label": "Spain",
+      "tStart": 228.0,
+      "tEnd": 226.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 502761.3091986118
+    },
+    {
+      "id": "spanish-empire-1797ce",
+      "lineage": "spain",
+      "member": 1,
+      "label": "Spanish Empire",
+      "tStart": 228.0,
+      "tEnd": 225.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 11271123.82477989
+    },
+    {
+      "id": "british-colonial-empire-1799ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
       "tStart": 226.0,
+      "tEnd": 225.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 763565.2142831568
+    },
+    {
+      "id": "kingdom-of-great-britain-1799ce",
+      "lineage": "britain",
+      "member": 0,
+      "label": "Great Britain",
+      "tStart": 226.0,
+      "tEnd": 205.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 343142.71702166426
+    },
+    {
+      "id": "kingdom-of-spain-1799ce",
+      "lineage": "spain",
+      "member": 0,
+      "label": "Spain",
+      "tStart": 226.0,
+      "tEnd": 222.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 501744.3718371794
+    },
+    {
+      "id": "russian-empire-1799ce",
+      "lineage": "russia",
+      "member": 1,
+      "label": "Russian Empire",
+      "tStart": 226.0,
+      "tEnd": 222.0,
+      "lat": 60.1706428527832,
+      "lon": 93.23625503860086,
+      "areaKm2": 16718994.473858159
+    },
+    {
+      "id": "british-colonial-empire-1800ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 225.0,
+      "tEnd": 222.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 769358.9719475033
+    },
+    {
+      "id": "spanish-empire-1800ce",
+      "lineage": "spain",
+      "member": 1,
+      "label": "Spanish Empire",
+      "tStart": 225.0,
+      "tEnd": 222.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 11242643.305351095
+    },
+    {
+      "id": "british-colonial-empire-1803ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 222.0,
       "tEnd": 220.0,
-      "lat": 40.19,
-      "lon": 29.06,
-      "areaKm2": 2646165.53175559
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 725962.6981760127
     },
     {
       "id": "holy-roman-empire-1803ce",
@@ -9257,6 +11468,50 @@
       "lat": 50.545555114746094,
       "lon": 8.25374638274693,
       "areaKm2": 91956.80577898966
+    },
+    {
+      "id": "kingdom-of-spain-1803ce",
+      "lineage": "spain",
+      "member": 0,
+      "label": "Spain",
+      "tStart": 222.0,
+      "tEnd": 216.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 495298.3638777526
+    },
+    {
+      "id": "russian-empire-1803ce",
+      "lineage": "russia",
+      "member": 1,
+      "label": "Russian Empire",
+      "tStart": 222.0,
+      "tEnd": 220.0,
+      "lat": 59.12017822265625,
+      "lon": 82.85259442942679,
+      "areaKm2": 16767494.287036616
+    },
+    {
+      "id": "spanish-empire-1803ce",
+      "lineage": "spain",
+      "member": 1,
+      "label": "Spanish Empire",
+      "tStart": 222.0,
+      "tEnd": 219.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 11189954.46135745
+    },
+    {
+      "id": "british-colonial-empire-1805ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 220.0,
+      "tEnd": 219.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 780917.0734720152
     },
     {
       "id": "mughal-empire-1805ce",
@@ -9281,6 +11536,17 @@
       "areaKm2": 2376225.275125946
     },
     {
+      "id": "portuguese-empire-1805ce",
+      "lineage": "portugal",
+      "member": 1,
+      "label": "Portuguese Empire",
+      "tStart": 220.0,
+      "tEnd": 216.0,
+      "lat": -12.97,
+      "lon": -38.51,
+      "areaKm2": 7908204.0655805785
+    },
+    {
       "id": "russian-empire-1805ce",
       "lineage": "russia",
       "member": 1,
@@ -9290,6 +11556,17 @@
       "lat": 58.980674743652344,
       "lon": 82.74722734380248,
       "areaKm2": 16838474.938561626
+    },
+    {
+      "id": "british-colonial-empire-1806ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 219.0,
+      "tEnd": 218.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 780628.2645422311
     },
     {
       "id": "holy-roman-empire-1806ce",
@@ -9303,6 +11580,39 @@
       "areaKm2": 4248.513953747973
     },
     {
+      "id": "spanish-empire-1806ce",
+      "lineage": "spain",
+      "member": 1,
+      "label": "Spanish Empire",
+      "tStart": 219.0,
+      "tEnd": 216.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 11301794.97691958
+    },
+    {
+      "id": "british-colonial-empire-1807ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 218.0,
+      "tEnd": 216.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 781571.3857099907
+    },
+    {
+      "id": "british-colonial-empire-1809ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 216.0,
+      "tEnd": 214.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 783257.6620208523
+    },
+    {
       "id": "kingdom-of-spain-1809ce",
       "lineage": "spain",
       "member": 0,
@@ -9314,15 +11624,37 @@
       "areaKm2": 233126.51358347083
     },
     {
+      "id": "portuguese-empire-1809ce",
+      "lineage": "portugal",
+      "member": 1,
+      "label": "Portuguese Empire",
+      "tStart": 216.0,
+      "tEnd": 214.0,
+      "lat": -12.97,
+      "lon": -38.51,
+      "areaKm2": 7947664.806150411
+    },
+    {
       "id": "russian-empire-1809ce",
       "lineage": "russia",
       "member": 1,
       "label": "Russian Empire",
       "tStart": 216.0,
-      "tEnd": 211.0,
+      "tEnd": 214.0,
       "lat": 58.28506851196289,
       "lon": 82.30107047728502,
       "areaKm2": 17382792.103618924
+    },
+    {
+      "id": "spanish-empire-1809ce",
+      "lineage": "spain",
+      "member": 1,
+      "label": "Spanish Empire",
+      "tStart": 216.0,
+      "tEnd": 214.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 11354380.562022598
     },
     {
       "id": "british-colonial-empire-1811ce",
@@ -9380,6 +11712,28 @@
       "areaKm2": 1755321.085231513
     },
     {
+      "id": "portuguese-empire-1811ce",
+      "lineage": "portugal",
+      "member": 1,
+      "label": "Portuguese Empire",
+      "tStart": 214.0,
+      "tEnd": 205.0,
+      "lat": -12.97,
+      "lon": -38.51,
+      "areaKm2": 7874271.294809411
+    },
+    {
+      "id": "russian-empire-1811ce",
+      "lineage": "russia",
+      "member": 1,
+      "label": "Russian Empire",
+      "tStart": 214.0,
+      "tEnd": 213.0,
+      "lat": 58.28506851196289,
+      "lon": 82.30107047728502,
+      "areaKm2": 17399715.254158728
+    },
+    {
       "id": "spanish-empire-1811ce",
       "lineage": "spain",
       "member": 1,
@@ -9424,6 +11778,17 @@
       "areaKm2": 377639.70150862995
     },
     {
+      "id": "russian-empire-1812ce",
+      "lineage": "russia",
+      "member": 1,
+      "label": "Russian Empire",
+      "tStart": 213.0,
+      "tEnd": 197.0,
+      "lat": 58.28506851196289,
+      "lon": 82.30107047728502,
+      "areaKm2": 17200796.1183908
+    },
+    {
       "id": "spanish-empire-1812ce",
       "lineage": "spain",
       "member": 1,
@@ -9440,7 +11805,7 @@
       "member": 1,
       "label": "British Empire",
       "tStart": 211.0,
-      "tEnd": 205.0,
+      "tEnd": 210.0,
       "lat": 51.51,
       "lon": -0.13,
       "areaKm2": 970606.0149820725
@@ -9468,17 +11833,6 @@
       "areaKm2": 2088169.5982389397
     },
     {
-      "id": "russian-empire-1814ce",
-      "lineage": "russia",
-      "member": 1,
-      "label": "Russian Empire",
-      "tStart": 211.0,
-      "tEnd": 197.0,
-      "lat": 58.28506851196289,
-      "lon": 82.30107047728502,
-      "areaKm2": 17431562.94323907
-    },
-    {
       "id": "spanish-empire-1814ce",
       "lineage": "spain",
       "member": 1,
@@ -9488,6 +11842,17 @@
       "lat": 40.42,
       "lon": -3.7,
       "areaKm2": 7861031.068544677
+    },
+    {
+      "id": "british-colonial-empire-1815ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 210.0,
+      "tEnd": 205.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 1004535.4334977195
     },
     {
       "id": "spanish-empire-1815ce",
@@ -9506,7 +11871,7 @@
       "member": 1,
       "label": "British Empire",
       "tStart": 205.0,
-      "tEnd": 200.0,
+      "tEnd": 203.0,
       "lat": 51.51,
       "lon": -0.13,
       "areaKm2": 860556.4349875561
@@ -9567,6 +11932,17 @@
       "areaKm2": 7831231.991060452
     },
     {
+      "id": "british-colonial-empire-1822ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 203.0,
+      "tEnd": 201.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 886519.6395698136
+    },
+    {
       "id": "portuguese-empire-1822ce",
       "lineage": "portugal",
       "member": 1,
@@ -9589,6 +11965,17 @@
       "areaKm2": 1984058.1658999017
     },
     {
+      "id": "british-colonial-empire-1824ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 201.0,
+      "tEnd": 200.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 879217.5644443053
+    },
+    {
       "id": "kingdom-of-portugal-1824ce",
       "lineage": "portugal",
       "member": 0,
@@ -9605,7 +11992,7 @@
       "member": 1,
       "label": "Spanish Empire",
       "tStart": 201.0,
-      "tEnd": 164.0,
+      "tEnd": 172.0,
       "lat": 40.42,
       "lon": -3.7,
       "areaKm2": 506351.60104470974
@@ -9627,7 +12014,7 @@
       "member": 0,
       "label": "Ottoman Empire",
       "tStart": 200.0,
-      "tEnd": 191.0,
+      "tEnd": 197.0,
       "lat": 40.19,
       "lon": 29.06,
       "areaKm2": 2155745.5181571143
@@ -9638,10 +12025,21 @@
       "member": 1,
       "label": "British Empire",
       "tStart": 197.0,
-      "tEnd": 185.0,
+      "tEnd": 195.0,
       "lat": 51.51,
       "lon": -0.13,
       "areaKm2": 1076666.196858912
+    },
+    {
+      "id": "ottoman-empire-1828ce",
+      "lineage": "ottoman",
+      "member": 0,
+      "label": "Ottoman Empire",
+      "tStart": 197.0,
+      "tEnd": 195.0,
+      "lat": 40.19,
+      "lon": 29.06,
+      "areaKm2": 2133411.9175494453
     },
     {
       "id": "russian-empire-1828ce",
@@ -9649,10 +12047,43 @@
       "member": 1,
       "label": "Russian Empire",
       "tStart": 197.0,
-      "tEnd": 179.0,
+      "tEnd": 191.0,
       "lat": 58.111663818359375,
       "lon": 82.45805823689574,
       "areaKm2": 17683969.608235855
+    },
+    {
+      "id": "british-colonial-empire-1830ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 195.0,
+      "tEnd": 191.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 1085739.3999539677
+    },
+    {
+      "id": "ottoman-empire-1830ce",
+      "lineage": "ottoman",
+      "member": 0,
+      "label": "Ottoman Empire",
+      "tStart": 195.0,
+      "tEnd": 191.0,
+      "lat": 40.19,
+      "lon": 29.06,
+      "areaKm2": 2128305.744107651
+    },
+    {
+      "id": "british-colonial-empire-1834ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 191.0,
+      "tEnd": 189.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 1113493.5327455567
     },
     {
       "id": "kingdom-of-spain-1834ce",
@@ -9671,10 +12102,32 @@
       "member": 0,
       "label": "Ottoman Empire",
       "tStart": 191.0,
-      "tEnd": 183.0,
+      "tEnd": 189.0,
       "lat": 40.19,
       "lon": 29.06,
       "areaKm2": 1459521.594211324
+    },
+    {
+      "id": "russian-empire-1834ce",
+      "lineage": "russia",
+      "member": 1,
+      "label": "Russian Empire",
+      "tStart": 191.0,
+      "tEnd": 185.0,
+      "lat": 58.111663818359375,
+      "lon": 82.45805823689574,
+      "areaKm2": 17630779.335520636
+    },
+    {
+      "id": "british-colonial-empire-1836ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 189.0,
+      "tEnd": 185.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 1191426.3367910131
     },
     {
       "id": "kingdom-of-spain-1836ce",
@@ -9688,12 +12141,23 @@
       "areaKm2": 462229.9503902958
     },
     {
+      "id": "ottoman-empire-1836ce",
+      "lineage": "ottoman",
+      "member": 0,
+      "label": "Ottoman Empire",
+      "tStart": 189.0,
+      "tEnd": 185.0,
+      "lat": 40.19,
+      "lon": 29.06,
+      "areaKm2": 1487898.1377909698
+    },
+    {
       "id": "british-colonial-empire-1840ce",
       "lineage": "britain",
       "member": 1,
       "label": "British Empire",
       "tStart": 185.0,
-      "tEnd": 172.0,
+      "tEnd": 183.0,
       "lat": 51.51,
       "lon": -0.13,
       "areaKm2": 1211232.5419874364
@@ -9704,10 +12168,43 @@
       "member": 0,
       "label": "Great Britain",
       "tStart": 185.0,
-      "tEnd": 135.0,
+      "tEnd": 155.0,
       "lat": 51.51,
       "lon": -0.13,
       "areaKm2": 348797.6280696946
+    },
+    {
+      "id": "ottoman-empire-1840ce",
+      "lineage": "ottoman",
+      "member": 0,
+      "label": "Ottoman Empire",
+      "tStart": 185.0,
+      "tEnd": 183.0,
+      "lat": 40.19,
+      "lon": 29.06,
+      "areaKm2": 1448423.4702242643
+    },
+    {
+      "id": "russian-empire-1840ce",
+      "lineage": "russia",
+      "member": 1,
+      "label": "Russian Empire",
+      "tStart": 185.0,
+      "tEnd": 179.0,
+      "lat": 58.111663818359375,
+      "lon": 82.45805823689574,
+      "areaKm2": 17631472.954477374
+    },
+    {
+      "id": "british-colonial-empire-1842ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 183.0,
+      "tEnd": 179.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 1227147.8236240374
     },
     {
       "id": "ottoman-empire-1842ce",
@@ -9721,6 +12218,17 @@
       "areaKm2": 2113588.7776932227
     },
     {
+      "id": "british-colonial-empire-1846ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 179.0,
+      "tEnd": 177.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 1271780.1082172974
+    },
+    {
       "id": "russian-empire-1846ce",
       "lineage": "russia",
       "member": 1,
@@ -9730,6 +12238,17 @@
       "lat": 58.111663818359375,
       "lon": 82.45805823689574,
       "areaKm2": 18997308.491740394
+    },
+    {
+      "id": "british-colonial-empire-1848ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 177.0,
+      "tEnd": 172.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 1311185.780011001
     },
     {
       "id": "qing-dynasty-1848ce",
@@ -9748,7 +12267,7 @@
       "member": 1,
       "label": "Russian Empire",
       "tStart": 177.0,
-      "tEnd": 165.0,
+      "tEnd": 169.0,
       "lat": 58.111663818359375,
       "lon": 82.45805823689574,
       "areaKm2": 20921921.14380101
@@ -9776,6 +12295,17 @@
       "areaKm2": 24328.497187440207
     },
     {
+      "id": "spanish-empire-1853ce",
+      "lineage": "spain",
+      "member": 1,
+      "label": "Spanish Empire",
+      "tStart": 172.0,
+      "tEnd": 164.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 487870.16546347464
+    },
+    {
       "id": "british-colonial-empire-1856ce",
       "lineage": "britain",
       "member": 1,
@@ -9796,6 +12326,17 @@
       "lat": 39.9,
       "lon": 116.4,
       "areaKm2": 10828860.200751275
+    },
+    {
+      "id": "russian-empire-1856ce",
+      "lineage": "russia",
+      "member": 1,
+      "label": "Russian Empire",
+      "tStart": 169.0,
+      "tEnd": 168.0,
+      "lat": 58.111663818359375,
+      "lon": 82.45805823689574,
+      "areaKm2": 20985079.41909918
     },
     {
       "id": "british-colonial-empire-1857ce",
@@ -9831,6 +12372,17 @@
       "areaKm2": 11126255.433663419
     },
     {
+      "id": "russian-empire-1857ce",
+      "lineage": "russia",
+      "member": 1,
+      "label": "Russian Empire",
+      "tStart": 168.0,
+      "tEnd": 165.0,
+      "lat": 58.111663818359375,
+      "lon": 82.45805823689574,
+      "areaKm2": 21022289.714155804
+    },
+    {
       "id": "british-colonial-empire-1859ce",
       "lineage": "britain",
       "member": 1,
@@ -9847,7 +12399,7 @@
       "member": 2,
       "label": "British Raj",
       "tStart": 166.0,
-      "tEnd": 140.0,
+      "tEnd": 157.0,
       "lat": 21.98268699645996,
       "lon": 80.5731754364308,
       "areaKm2": 4186566.176596283
@@ -9935,7 +12487,7 @@
       "member": 1,
       "label": "British Empire",
       "tStart": 162.0,
-      "tEnd": 157.0,
+      "tEnd": 161.0,
       "lat": 51.51,
       "lon": -0.13,
       "areaKm2": 7252118.184734901
@@ -9950,6 +12502,17 @@
       "lat": 39.9,
       "lon": 116.4,
       "areaKm2": 9937135.905471688
+    },
+    {
+      "id": "british-colonial-empire-1864ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 161.0,
+      "tEnd": 157.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 7252863.718899917
     },
     {
       "id": "qing-dynasty-1864ce",
@@ -10007,12 +12570,23 @@
       "areaKm2": 8071408.935006296
     },
     {
+      "id": "british-raj-1868ce",
+      "lineage": "britain",
+      "member": 2,
+      "label": "British Raj",
+      "tStart": 157.0,
+      "tEnd": 140.0,
+      "lat": 21.98268699645996,
+      "lon": 80.5731754364308,
+      "areaKm2": 4188457.020817419
+    },
+    {
       "id": "russian-empire-1868ce",
       "lineage": "russia",
       "member": 1,
       "label": "Russian Empire",
       "tStart": 157.0,
-      "tEnd": 152.0,
+      "tEnd": 155.0,
       "lat": 57.24741744995117,
       "lon": 81.7200343723677,
       "areaKm2": 21486555.366508484
@@ -10023,10 +12597,43 @@
       "member": 1,
       "label": "British Empire",
       "tStart": 155.0,
-      "tEnd": 152.0,
+      "tEnd": 154.0,
       "lat": 51.51,
       "lon": -0.13,
       "areaKm2": 8420131.342472339
+    },
+    {
+      "id": "kingdom-of-great-britain-1870ce",
+      "lineage": "britain",
+      "member": 0,
+      "label": "Great Britain",
+      "tStart": 155.0,
+      "tEnd": 145.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 345238.1508739021
+    },
+    {
+      "id": "russian-empire-1870ce",
+      "lineage": "russia",
+      "member": 1,
+      "label": "Russian Empire",
+      "tStart": 155.0,
+      "tEnd": 152.0,
+      "lat": 57.24741744995117,
+      "lon": 81.7200343723677,
+      "areaKm2": 21576328.734909356
+    },
+    {
+      "id": "british-colonial-empire-1871ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 154.0,
+      "tEnd": 152.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 8526113.969385376
     },
     {
       "id": "british-colonial-empire-1873ce",
@@ -10056,7 +12663,7 @@
       "member": 0,
       "label": "Ottoman Empire",
       "tStart": 152.0,
-      "tEnd": 125.0,
+      "tEnd": 145.0,
       "lat": 40.19,
       "lon": 29.06,
       "areaKm2": 2412708.8462304943
@@ -10078,7 +12685,7 @@
       "member": 1,
       "label": "Russian Empire",
       "tStart": 152.0,
-      "tEnd": 125.0,
+      "tEnd": 148.0,
       "lat": 56.490665435791016,
       "lon": 79.53535387249383,
       "areaKm2": 21993850.094393544
@@ -10100,7 +12707,7 @@
       "member": 0,
       "label": "Spain",
       "tStart": 148.0,
-      "tEnd": 135.0,
+      "tEnd": 145.0,
       "lat": 40.42,
       "lon": -3.7,
       "areaKm2": 984289.2490801172
@@ -10111,10 +12718,21 @@
       "member": 23,
       "label": "Qing Dynasty",
       "tStart": 148.0,
-      "tEnd": 125.0,
+      "tEnd": 130.0,
       "lat": 39.9,
       "lon": 116.4,
       "areaKm2": 11119698.121053247
+    },
+    {
+      "id": "russian-empire-1877ce",
+      "lineage": "russia",
+      "member": 1,
+      "label": "Russian Empire",
+      "tStart": 148.0,
+      "tEnd": 145.0,
+      "lat": 56.490665435791016,
+      "lon": 79.53535387249383,
+      "areaKm2": 22212349.278605685
     },
     {
       "id": "british-colonial-empire-1880ce",
@@ -10128,12 +12746,56 @@
       "areaKm2": 9755195.283058984
     },
     {
+      "id": "kingdom-of-great-britain-1880ce",
+      "lineage": "britain",
+      "member": 0,
+      "label": "Great Britain",
+      "tStart": 145.0,
+      "tEnd": 135.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 356675.6338481791
+    },
+    {
+      "id": "kingdom-of-spain-1880ce",
+      "lineage": "spain",
+      "member": 0,
+      "label": "Spain",
+      "tStart": 145.0,
+      "tEnd": 140.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 988477.5564240703
+    },
+    {
+      "id": "ottoman-empire-1880ce",
+      "lineage": "ottoman",
+      "member": 0,
+      "label": "Ottoman Empire",
+      "tStart": 145.0,
+      "tEnd": 125.0,
+      "lat": 40.19,
+      "lon": 29.06,
+      "areaKm2": 2236613.399379005
+    },
+    {
+      "id": "russian-empire-1880ce",
+      "lineage": "russia",
+      "member": 1,
+      "label": "Russian Empire",
+      "tStart": 145.0,
+      "tEnd": 130.0,
+      "lat": 56.490665435791016,
+      "lon": 79.53535387249383,
+      "areaKm2": 22138793.01447115
+    },
+    {
       "id": "spanish-empire-1880ce",
       "lineage": "spain",
       "member": 1,
       "label": "Spanish Empire",
       "tStart": 145.0,
-      "tEnd": 135.0,
+      "tEnd": 140.0,
       "lat": 40.42,
       "lon": -3.7,
       "areaKm2": 988477.5564240703
@@ -10183,6 +12845,28 @@
       "areaKm2": 1142245.689076493
     },
     {
+      "id": "kingdom-of-spain-1885ce",
+      "lineage": "spain",
+      "member": 0,
+      "label": "Spain",
+      "tStart": 140.0,
+      "tEnd": 135.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 1044183.4560643176
+    },
+    {
+      "id": "spanish-empire-1885ce",
+      "lineage": "spain",
+      "member": 1,
+      "label": "Spanish Empire",
+      "tStart": 140.0,
+      "tEnd": 135.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 1044183.4560643176
+    },
+    {
       "id": "british-africa-1890ce",
       "lineage": "britain",
       "member": 3,
@@ -10199,7 +12883,7 @@
       "member": 1,
       "label": "British Empire",
       "tStart": 135.0,
-      "tEnd": 125.0,
+      "tEnd": 130.0,
       "lat": 51.51,
       "lon": -0.13,
       "areaKm2": 12257586.123316824
@@ -10232,7 +12916,7 @@
       "member": 0,
       "label": "Spain",
       "tStart": 135.0,
-      "tEnd": 125.0,
+      "tEnd": 130.0,
       "lat": 40.42,
       "lon": -3.7,
       "areaKm2": 1294074.6033185269
@@ -10243,7 +12927,7 @@
       "member": 1,
       "label": "Spanish Empire",
       "tStart": 135.0,
-      "tEnd": 125.0,
+      "tEnd": 130.0,
       "lat": 40.42,
       "lon": -3.7,
       "areaKm2": 1294074.6033185269
@@ -10254,10 +12938,21 @@
       "member": 3,
       "label": "British Africa",
       "tStart": 130.0,
-      "tEnd": 125.0,
+      "tEnd": 127.0,
       "lat": -21.63637351989746,
       "lon": 26.465481536599878,
       "areaKm2": 4917006.508638037
+    },
+    {
+      "id": "british-colonial-empire-1895ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 130.0,
+      "tEnd": 127.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 12452748.604411649
     },
     {
       "id": "kingdom-of-great-britain-1895ce",
@@ -10265,7 +12960,7 @@
       "member": 0,
       "label": "Great Britain",
       "tStart": 130.0,
-      "tEnd": 103.0,
+      "tEnd": 110.0,
       "lat": 51.51,
       "lon": -0.13,
       "areaKm2": 740000.2764929283
@@ -10282,6 +12977,17 @@
       "areaKm2": 1941263.7090781413
     },
     {
+      "id": "kingdom-of-spain-1895ce",
+      "lineage": "spain",
+      "member": 0,
+      "label": "Spain",
+      "tStart": 130.0,
+      "tEnd": 127.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 1238532.8966697443
+    },
+    {
       "id": "qajar-dynasty-1895ce",
       "lineage": "persia",
       "member": 5,
@@ -10293,6 +12999,72 @@
       "areaKm2": 1780919.2766292098
     },
     {
+      "id": "qing-dynasty-1895ce",
+      "lineage": "china",
+      "member": 23,
+      "label": "Qing Dynasty",
+      "tStart": 130.0,
+      "tEnd": 125.0,
+      "lat": 39.9,
+      "lon": 116.4,
+      "areaKm2": 11108679.448464064
+    },
+    {
+      "id": "russian-empire-1895ce",
+      "lineage": "russia",
+      "member": 1,
+      "label": "Russian Empire",
+      "tStart": 130.0,
+      "tEnd": 127.0,
+      "lat": 56.490665435791016,
+      "lon": 79.53535387249383,
+      "areaKm2": 22158478.632697336
+    },
+    {
+      "id": "spanish-empire-1895ce",
+      "lineage": "spain",
+      "member": 1,
+      "label": "Spanish Empire",
+      "tStart": 130.0,
+      "tEnd": 127.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 1238532.8966697443
+    },
+    {
+      "id": "british-africa-1898ce",
+      "lineage": "britain",
+      "member": 3,
+      "label": "British Africa",
+      "tStart": 127.0,
+      "tEnd": 125.0,
+      "lat": -21.63637351989746,
+      "lon": 26.465481536599878,
+      "areaKm2": 5097651.549178325
+    },
+    {
+      "id": "british-colonial-empire-1898ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 127.0,
+      "tEnd": 125.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 12456305.211356957
+    },
+    {
+      "id": "kingdom-of-spain-1898ce",
+      "lineage": "spain",
+      "member": 0,
+      "label": "Spain",
+      "tStart": 127.0,
+      "tEnd": 125.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 1230143.1304879505
+    },
+    {
       "id": "qajar-dynasty-1898ce",
       "lineage": "persia",
       "member": 5,
@@ -10302,6 +13074,28 @@
       "lat": 35.69,
       "lon": 51.39,
       "areaKm2": 1624311.8772313145
+    },
+    {
+      "id": "russian-empire-1898ce",
+      "lineage": "russia",
+      "member": 1,
+      "label": "Russian Empire",
+      "tStart": 127.0,
+      "tEnd": 125.0,
+      "lat": 56.490665435791016,
+      "lon": 79.53535387249383,
+      "areaKm2": 22162413.993821062
+    },
+    {
+      "id": "spanish-empire-1898ce",
+      "lineage": "spain",
+      "member": 1,
+      "label": "Spanish Empire",
+      "tStart": 127.0,
+      "tEnd": 125.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 1230143.1304879505
     },
     {
       "id": "british-africa-1900ce",
@@ -10331,7 +13125,7 @@
       "member": 0,
       "label": "Spain",
       "tStart": 125.0,
-      "tEnd": 93.0,
+      "tEnd": 113.0,
       "lat": 40.42,
       "lon": -3.7,
       "areaKm2": 841117.4650455848
@@ -10342,7 +13136,7 @@
       "member": 0,
       "label": "Ottoman Empire",
       "tStart": 125.0,
-      "tEnd": 112.0,
+      "tEnd": 113.0,
       "lat": 40.19,
       "lon": 29.06,
       "areaKm2": 2168947.957454138
@@ -10375,7 +13169,7 @@
       "member": 1,
       "label": "Spanish Empire",
       "tStart": 125.0,
-      "tEnd": 93.0,
+      "tEnd": 113.0,
       "lat": 40.42,
       "lon": -3.7,
       "areaKm2": 841117.4650455848
@@ -10386,7 +13180,7 @@
       "member": 3,
       "label": "British Africa",
       "tStart": 120.0,
-      "tEnd": 109.0,
+      "tEnd": 112.0,
       "lat": 13.59319257736206,
       "lon": 29.324469969866747,
       "areaKm2": 9275140.054764159
@@ -10419,7 +13213,7 @@
       "member": 1,
       "label": "Russian Empire",
       "tStart": 120.0,
-      "tEnd": 110.0,
+      "tEnd": 112.0,
       "lat": 56.490665435791016,
       "lon": 79.53535387249383,
       "areaKm2": 22118428.896614168
@@ -10441,7 +13235,7 @@
       "member": 1,
       "label": "British Empire",
       "tStart": 114.0,
-      "tEnd": 110.0,
+      "tEnd": 111.0,
       "lat": 51.51,
       "lon": -0.13,
       "areaKm2": 19064321.430317495
@@ -10452,21 +13246,87 @@
       "member": 5,
       "label": "Portugal",
       "tStart": 114.0,
-      "tEnd": 111.0,
+      "tEnd": 113.0,
       "lat": 38.72,
       "lon": -9.14,
       "areaKm2": 1965031.6431549613
     },
     {
-      "id": "ottoman-empire-1913ce",
+      "id": "kingdom-of-spain-1912ce",
+      "lineage": "spain",
+      "member": 0,
+      "label": "Spain",
+      "tStart": 113.0,
+      "tEnd": 101.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 854139.5260525007
+    },
+    {
+      "id": "ottoman-empire-1912ce",
       "lineage": "ottoman",
       "member": 0,
       "label": "Ottoman Empire",
-      "tStart": 112.0,
-      "tEnd": 108.0,
+      "tStart": 113.0,
+      "tEnd": 109.0,
       "lat": 40.19,
       "lon": 29.06,
-      "areaKm2": 1929824.0980275238
+      "areaKm2": 2018087.2156580752
+    },
+    {
+      "id": "portuguese-republic-1912ce",
+      "lineage": "portugal",
+      "member": 5,
+      "label": "Portugal",
+      "tStart": 113.0,
+      "tEnd": 111.0,
+      "lat": 38.72,
+      "lon": -9.14,
+      "areaKm2": 1965593.6833639396
+    },
+    {
+      "id": "spanish-empire-1912ce",
+      "lineage": "spain",
+      "member": 1,
+      "label": "Spanish Empire",
+      "tStart": 113.0,
+      "tEnd": 101.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 854139.5260525007
+    },
+    {
+      "id": "british-africa-1913ce",
+      "lineage": "britain",
+      "member": 3,
+      "label": "British Africa",
+      "tStart": 112.0,
+      "tEnd": 109.0,
+      "lat": 13.59319257736206,
+      "lon": 29.315507584942345,
+      "areaKm2": 9352777.174019115
+    },
+    {
+      "id": "russian-empire-1913ce",
+      "lineage": "russia",
+      "member": 1,
+      "label": "Russian Empire",
+      "tStart": 112.0,
+      "tEnd": 110.0,
+      "lat": 56.490665435791016,
+      "lon": 79.53535387249383,
+      "areaKm2": 22161099.38468425
+    },
+    {
+      "id": "british-colonial-empire-1914ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 111.0,
+      "tEnd": 110.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 19060160.051732637
     },
     {
       "id": "portuguese-republic-1914ce",
@@ -10485,10 +13345,21 @@
       "member": 1,
       "label": "British Empire",
       "tStart": 110.0,
-      "tEnd": 105.0,
+      "tEnd": 108.0,
       "lat": 51.51,
       "lon": -0.13,
       "areaKm2": 19417188.173053507
+    },
+    {
+      "id": "kingdom-of-great-britain-1915ce",
+      "lineage": "britain",
+      "member": 0,
+      "label": "Great Britain",
+      "tStart": 110.0,
+      "tEnd": 108.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 748946.23886235
     },
     {
       "id": "qajar-dynasty-1915ce",
@@ -10524,6 +13395,17 @@
       "areaKm2": 10286524.247036563
     },
     {
+      "id": "ottoman-empire-1916ce",
+      "lineage": "ottoman",
+      "member": 0,
+      "label": "Ottoman Empire",
+      "tStart": 109.0,
+      "tEnd": 108.0,
+      "lat": 40.19,
+      "lon": 29.06,
+      "areaKm2": 1799983.1977665415
+    },
+    {
       "id": "russian-empire-1916ce",
       "lineage": "russia",
       "member": 1,
@@ -10546,6 +13428,28 @@
       "areaKm2": 10945446.639852803
     },
     {
+      "id": "british-colonial-empire-1917ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 108.0,
+      "tEnd": 103.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 19543240.994152483
+    },
+    {
+      "id": "kingdom-of-great-britain-1917ce",
+      "lineage": "britain",
+      "member": 0,
+      "label": "Great Britain",
+      "tStart": 108.0,
+      "tEnd": 107.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 755394.3833366272
+    },
+    {
       "id": "ottoman-empire-1917ce",
       "lineage": "ottoman",
       "member": 0,
@@ -10566,6 +13470,17 @@
       "lat": 1.410695344209671,
       "lon": 35.71600218056129,
       "areaKm2": 11484136.994588844
+    },
+    {
+      "id": "kingdom-of-great-britain-1918ce",
+      "lineage": "britain",
+      "member": 0,
+      "label": "Great Britain",
+      "tStart": 107.0,
+      "tEnd": 106.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 761805.8724831846
     },
     {
       "id": "ottoman-empire-1918ce",
@@ -10601,6 +13516,17 @@
       "areaKm2": 11755869.773435013
     },
     {
+      "id": "kingdom-of-great-britain-1919ce",
+      "lineage": "britain",
+      "member": 0,
+      "label": "Great Britain",
+      "tStart": 106.0,
+      "tEnd": 105.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 763306.9680022202
+    },
+    {
       "id": "ottoman-empire-1919ce",
       "lineage": "ottoman",
       "member": 0,
@@ -10634,15 +13560,15 @@
       "areaKm2": 11182653.14690726
     },
     {
-      "id": "british-colonial-empire-1920ce",
+      "id": "kingdom-of-great-britain-1920ce",
       "lineage": "britain",
-      "member": 1,
-      "label": "British Empire",
+      "member": 0,
+      "label": "Great Britain",
       "tStart": 105.0,
       "tEnd": 103.0,
       "lat": 51.51,
       "lon": -0.13,
-      "areaKm2": 19692920.743896134
+      "areaKm2": 771239.8484055969
     },
     {
       "id": "ottoman-empire-1920ce",
@@ -10683,7 +13609,7 @@
       "member": 0,
       "label": "Great Britain",
       "tStart": 103.0,
-      "tEnd": 89.0,
+      "tEnd": 101.0,
       "lat": 51.51,
       "lon": -0.13,
       "areaKm2": 696709.422320128
@@ -10711,15 +13637,81 @@
       "areaKm2": 1624334.9976886772
     },
     {
+      "id": "kingdom-of-great-britain-1924ce",
+      "lineage": "britain",
+      "member": 0,
+      "label": "Great Britain",
+      "tStart": 101.0,
+      "tEnd": 99.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 678991.623241523
+    },
+    {
+      "id": "kingdom-of-spain-1924ce",
+      "lineage": "spain",
+      "member": 0,
+      "label": "Spain",
+      "tStart": 101.0,
+      "tEnd": 99.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 843911.7526246165
+    },
+    {
+      "id": "spanish-empire-1924ce",
+      "lineage": "spain",
+      "member": 1,
+      "label": "Spanish Empire",
+      "tStart": 101.0,
+      "tEnd": 99.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 843911.7526246165
+    },
+    {
       "id": "estado-novo-1926ce",
       "lineage": "portugal",
       "member": 6,
       "label": "Portugal",
       "tStart": 99.0,
-      "tEnd": 49.0,
+      "tEnd": 80.0,
       "lat": 38.72,
       "lon": -9.14,
       "areaKm2": 2201904.6436545574
+    },
+    {
+      "id": "kingdom-of-great-britain-1926ce",
+      "lineage": "britain",
+      "member": 0,
+      "label": "Great Britain",
+      "tStart": 99.0,
+      "tEnd": 93.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 673620.2844126945
+    },
+    {
+      "id": "kingdom-of-spain-1926ce",
+      "lineage": "spain",
+      "member": 0,
+      "label": "Spain",
+      "tStart": 99.0,
+      "tEnd": 93.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 854139.5260525007
+    },
+    {
+      "id": "spanish-empire-1926ce",
+      "lineage": "spain",
+      "member": 1,
+      "label": "Spanish Empire",
+      "tStart": 99.0,
+      "tEnd": 93.0,
+      "lat": 40.42,
+      "lon": -3.7,
+      "areaKm2": 854139.5260525007
     },
     {
       "id": "british-africa-1930ce",
@@ -10753,6 +13745,17 @@
       "lat": 51.51,
       "lon": -0.13,
       "areaKm2": 9683154.010632524
+    },
+    {
+      "id": "kingdom-of-great-britain-1932ce",
+      "lineage": "britain",
+      "member": 0,
+      "label": "Great Britain",
+      "tStart": 93.0,
+      "tEnd": 89.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 687652.572024606
     },
     {
       "id": "british-africa-1936ce",
@@ -10793,7 +13796,7 @@
       "member": 0,
       "label": "Great Britain",
       "tStart": 85.0,
-      "tEnd": 80.0,
+      "tEnd": 84.0,
       "lat": 51.51,
       "lon": -0.13,
       "areaKm2": 809652.475046569
@@ -10808,6 +13811,17 @@
       "lat": 3.3071795701980595,
       "lon": 38.83739089797821,
       "areaKm2": 10339419.894020606
+    },
+    {
+      "id": "kingdom-of-great-britain-1941ce",
+      "lineage": "britain",
+      "member": 0,
+      "label": "Great Britain",
+      "tStart": 84.0,
+      "tEnd": 80.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 811082.315999531
     },
     {
       "id": "british-africa-1942ce",
@@ -10876,6 +13890,17 @@
       "areaKm2": 4901868.20364164
     },
     {
+      "id": "estado-novo-1945ce",
+      "lineage": "portugal",
+      "member": 6,
+      "label": "Portugal",
+      "tStart": 80.0,
+      "tEnd": 79.0,
+      "lat": 38.72,
+      "lon": -9.14,
+      "areaKm2": 2182710.899371341
+    },
+    {
       "id": "kingdom-of-great-britain-1945ce",
       "lineage": "britain",
       "member": 0,
@@ -10909,6 +13934,17 @@
       "areaKm2": 1860085.0096876612
     },
     {
+      "id": "estado-novo-1946ce",
+      "lineage": "portugal",
+      "member": 6,
+      "label": "Portugal",
+      "tStart": 79.0,
+      "tEnd": 58.0,
+      "lat": 38.72,
+      "lon": -9.14,
+      "areaKm2": 2201736.5964407274
+    },
+    {
       "id": "british-colonial-empire-1947ce",
       "lineage": "britain",
       "member": 1,
@@ -10936,10 +13972,21 @@
       "member": 0,
       "label": "Great Britain",
       "tStart": 78.0,
-      "tEnd": 69.0,
+      "tEnd": 77.0,
       "lat": 51.51,
       "lon": -0.13,
       "areaKm2": 726102.4790098787
+    },
+    {
+      "id": "kingdom-of-great-britain-1948ce",
+      "lineage": "britain",
+      "member": 0,
+      "label": "Great Britain",
+      "tStart": 77.0,
+      "tEnd": 69.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 697892.230595088
     },
     {
       "id": "british-africa-1953ce",
@@ -10958,7 +14005,7 @@
       "member": 3,
       "label": "British Africa",
       "tStart": 69.0,
-      "tEnd": 65.0,
+      "tEnd": 67.0,
       "lat": 8.835915088653564,
       "lon": 7.783894544454992,
       "areaKm2": 5475611.2009967
@@ -10973,6 +14020,17 @@
       "lat": 51.51,
       "lon": -0.13,
       "areaKm2": 1005284.1943039857
+    },
+    {
+      "id": "british-africa-1958ce",
+      "lineage": "britain",
+      "member": 3,
+      "label": "British Africa",
+      "tStart": 67.0,
+      "tEnd": 65.0,
+      "lat": 8.835915088653564,
+      "lon": 7.783894544454992,
+      "areaKm2": 5233156.698128457
     },
     {
       "id": "british-colonial-empire-1958ce",
@@ -11008,6 +14066,17 @@
       "areaKm2": 351420.7903143806
     },
     {
+      "id": "estado-novo-1967ce",
+      "lineage": "portugal",
+      "member": 6,
+      "label": "Portugal",
+      "tStart": 58.0,
+      "tEnd": 52.0,
+      "lat": 38.72,
+      "lon": -9.14,
+      "areaKm2": 2197785.0329982233
+    },
+    {
       "id": "british-colonial-empire-1969ce",
       "lineage": "britain",
       "member": 1,
@@ -11028,6 +14097,17 @@
       "lat": 51.51,
       "lon": -0.13,
       "areaKm2": 672206.4324807501
+    },
+    {
+      "id": "estado-novo-1973ce",
+      "lineage": "portugal",
+      "member": 6,
+      "label": "Portugal",
+      "tStart": 52.0,
+      "tEnd": 49.0,
+      "lat": 38.72,
+      "lon": -9.14,
+      "areaKm2": 2164913.7783244886
     },
     {
       "id": "british-colonial-empire-1996ce",
